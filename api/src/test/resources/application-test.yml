@@ -1,0 +1,21 @@
+# Test-only values. Postgres/Redis URLs are injected per-run from Testcontainers (see AbstractIntegrationTest).
+paycore:
+  jwt:
+    secret: test-jwt-secret-test-jwt-secret-test-jwt-secret-0000
+    ttl-minutes: 30
+  encryption-key: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+  card-fingerprint-key: AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+  internal-job-token: test-internal-token
+  checkout-base-url: http://localhost:3000
+  cors-allowed-origins: http://localhost:3000
+  demo:
+    email: demo@paycore.test
+    password: demo-password-123
+    api-key: sk_test_demo00000000000000000000000000000
+
+logging:
+  level:
+    com.paycore: DEBUG
+    org.springframework.security: WARN
+    org.testcontainers: WARN
+    com.github.dockerjava: WARN

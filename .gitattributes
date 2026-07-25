@@ -1,0 +1,7 @@
+# Normalize to LF so shell scripts (mvnw, Docker) work on Linux regardless of the Windows checkout.
+* text=auto eol=lf
+*.cmd text eol=crlf
+*.bat text eol=crlf
+*.png binary
+*.jpg binary
+*.jar binary

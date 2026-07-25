@@ -1,0 +1,22 @@
+# secrets
+.env
+.env.*
+!.env.example
+# java / maven
+api/target/
+api/.mvn/wrapper/maven-wrapper.jar
+*.class
+*.log
+# node
+web/node_modules/
+web/.next/
+web/out/
+web/.vercel
+# ide / os
+.idea/
+*.iml
+.vscode/
+.DS_Store
+Thumbs.db
+# load test output
+load/results/
