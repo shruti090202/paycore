@@ -81,7 +81,7 @@
     <dependency>
       <groupId>org.postgresql</groupId>
       <artifactId>postgresql</artifactId>
-      <scope>runtime</scope>
+      <!-- compile scope: PGobject is used for jsonb conversions; PayCore is Postgres-only by design -->
     </dependency>
 
     <!-- Redis (Lettuce) for rate limiting + fraud velocity only -->
