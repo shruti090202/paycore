@@ -192,18 +192,58 @@ public class PaymentService {
         return p;
     }
 
-    /** The bank call timed out: we do not know whether the authorization happened. A job resolves it later. */
+    /**
+     * We are about to ask the bank (or asked and never heard back). Committed BEFORE the bank call, with the
+     * reference we will send, so a crash or timeout leaves a payment the status-check job can resolve.
+     */
     @Transactional
-    public Payment markPendingBank(String paymentId, String bankRef) {
+    public Payment markPendingBank(String paymentId, String bankRef, CardSummary card) {
         Payment p = lock(paymentId);
         Instant now = clock.instant();
         PaymentStatus from = p.paymentStatus();
         requireTransition(p, PaymentStatus.PENDING_BANK, "mark pending");
         p.setBankRef(bankRef);
+        if (card != null) {
+            p.setCardBrand(card.brand());
+            p.setCardLast4(card.last4());
+            p.setCardFingerprint(card.fingerprint());
+        }
         p.transitionTo(PaymentStatus.PENDING_BANK, now);
         p = template.update(p);
         recordEvent(p, "payment.pending_bank", from, PaymentStatus.PENDING_BANK, Map.of("bank_ref", bankRef), now);
         return p;
+    }
+
+    /**
+     * The bank approved a refund. Updates the counters + status, posts the ledger entry and the timeline event.
+     * Runs inside the caller's transaction together with the refund row update.
+     */
+    @Transactional
+    public Payment applyRefundSuccess(String paymentId, String refundId, Money amount) {
+        Payment p = lock(paymentId);
+        Instant now = clock.instant();
+        PaymentStatus from = p.paymentStatus();
+        Money newRefunded = p.refunded().plus(amount);
+        if (newRefunded.isGreaterThan(p.captured())) {
+            // Cannot happen if the reservation logic is right; the DB CHECK would reject it anyway.
+            throw new IllegalStateException("refund " + refundId + " would exceed captured amount");
+        }
+        PaymentStatus to = newRefunded.equals(p.captured()) ? PaymentStatus.REFUNDED : PaymentStatus.PARTIALLY_REFUNDED;
+        requireTransition(p, to, "refund");
+        p.setRefundedMinor(newRefunded.minor());
+        p.transitionTo(to, now);
+        p = template.update(p);
+        ledger.postRefund(refundId, p.getId(), p.getMerchantId(), amount);
+        recordEvent(p, "payment.refunded", from, to, Map.of("refund_id", refundId, "amount_minor", amount.minor(),
+                "refunded_minor", newRefunded.minor()), now);
+        return p;
+    }
+
+    /** Timeline entries that are not status changes (refund failed/pending, bank timeout). */
+    @Transactional
+    public void recordInfoEvent(String paymentId, String type, Map<String, ?> data) {
+        Payment p = payments.findById(paymentId).orElseThrow(() -> PayCoreException.notFound("payment", paymentId));
+        recordEvent(p, type, null, null, data, clock.instant());
     }
 
     // ---- internals ------------------------------------------------------------------------------------------

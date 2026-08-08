@@ -3,6 +3,7 @@ package com.paycore.api.dashboard;
 import com.paycore.api.dto.LedgerDtos;
 import com.paycore.api.dto.PageDto;
 import com.paycore.api.dto.PaymentDto;
+import com.paycore.api.dto.RefundDto;
 import com.paycore.auth.MerchantPrincipal;
 import com.paycore.common.config.OpenApiConfig;
 import com.paycore.common.config.PayCoreProperties;
@@ -12,6 +13,15 @@ import com.paycore.payments.Payment;
 import com.paycore.payments.PaymentQueries;
 import com.paycore.payments.PaymentService;
 import com.paycore.payments.PaymentStatus;
+import com.paycore.payments.BankAttempt;
+import com.paycore.payments.BankAttemptRepository;
+import com.paycore.payments.RefundService;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Size;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.RequestBody;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -35,11 +45,17 @@ public class DashboardPaymentController {
 
     private final PaymentService paymentService;
     private final LedgerService ledgerService;
+    private final RefundService refundService;
+    private final BankAttemptRepository bankAttempts;
     private final String checkoutBaseUrl;
 
-    public DashboardPaymentController(PaymentService paymentService, LedgerService ledgerService, PayCoreProperties props) {
+    public DashboardPaymentController(PaymentService paymentService, LedgerService ledgerService,
+                                      RefundService refundService, BankAttemptRepository bankAttempts,
+                                      PayCoreProperties props) {
         this.paymentService = paymentService;
         this.ledgerService = ledgerService;
+        this.refundService = refundService;
+        this.bankAttempts = bankAttempts;
         this.checkoutBaseUrl = props.checkoutBaseUrl();
     }
 
@@ -47,7 +63,19 @@ public class DashboardPaymentController {
                            Instant createdAt) {
     }
 
-    public record PaymentDetail(PaymentDto payment, List<EventDto> events, List<LedgerDtos.JournalEntryDto> ledger) {
+    public record BankAttemptDto(String id, String kind, String bankRef, long amountMinor, String outcome, String declineCode,
+                                 Integer latencyMs, String resolution, Instant createdAt, Instant resolvedAt) {
+        static BankAttemptDto from(BankAttempt a) {
+            return new BankAttemptDto(a.id(), a.kind(), a.bankRef(), a.amountMinor(), a.outcome(), a.declineCode(),
+                    a.latencyMs(), a.resolution(), a.createdAt(), a.resolvedAt());
+        }
+    }
+
+    public record PaymentDetail(PaymentDto payment, List<EventDto> events, List<LedgerDtos.JournalEntryDto> ledger,
+                                List<RefundDto> refunds, List<BankAttemptDto> bankAttempts) {
+    }
+
+    public record RefundRequest(@Min(1) Long amountMinor, @Size(max = 500) String reason) {
     }
 
     @GetMapping("/payments")
@@ -80,7 +108,17 @@ public class DashboardPaymentController {
                 .toList();
         List<LedgerDtos.JournalEntryDto> ledger = ledgerService.entriesFor(LedgerService.REF_PAYMENT, p.getId())
                 .stream().map(LedgerDtos::from).toList();
-        return new PaymentDetail(PaymentDto.from(p, checkoutBaseUrl), events, ledger);
+        List<RefundDto> refunds = refundService.forPayment(p.getId()).stream().map(RefundDto::from).toList();
+        List<BankAttemptDto> attempts = bankAttempts.findByPaymentIdOrderByIdAsc(p.getId()).stream().map(BankAttemptDto::from).toList();
+        return new PaymentDetail(PaymentDto.from(p, checkoutBaseUrl), events, ledger, refunds, attempts);
+    }
+
+    @PostMapping("/payments/{id}/refunds")
+    public ResponseEntity<RefundDto> refund(@AuthenticationPrincipal MerchantPrincipal principal, @PathVariable String id,
+                                            @Valid @RequestBody(required = false) RefundRequest req) {
+        var r = refundService.create(principal.merchantId(), id, req == null ? null : req.amountMinor(),
+                req == null ? null : req.reason());
+        return ResponseEntity.status(HttpStatus.CREATED).body(RefundDto.from(r));
     }
 
     @PostMapping("/payments/{id}/capture")

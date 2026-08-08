@@ -19,3 +19,8 @@ logging:
     org.springframework.security: WARN
     org.testcontainers: WARN
     com.github.dockerjava: WARN
+
+# Bank resolution: no waiting in tests (production defaults are 30s min age, 600s not-received grace).
+paycore.bank:
+  resolve-min-age-seconds: 0
+  not-received-grace-seconds: 0

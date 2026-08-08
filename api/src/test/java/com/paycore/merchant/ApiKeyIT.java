@@ -89,10 +89,9 @@ class ApiKeyIT extends AbstractIntegrationTest {
         assertThat(denied.status()).isIn(401, 403);
         assertThat(denied.text("/error/type")).isIn("authentication_error", "permission_error");
 
-        // Correct token -> route exists in a later phase, so 404 is the expected "authenticated" outcome now.
         Api.Response allowed = api.get("/internal/jobs/status", Map.of("X-Internal-Token", "test-internal-token"));
-        assertThat(allowed.status()).isEqualTo(404);
-        assertThat(allowed.text("/error/code")).isEqualTo("route_missing");
+        assertThat(allowed.status()).isEqualTo(200);
+        assertThat(allowed.at("/jobs")).isNotEmpty();
     }
 
     @Test
