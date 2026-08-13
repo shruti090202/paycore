@@ -2,6 +2,7 @@ package com.paycore.auth;
 
 import com.paycore.common.config.PayCoreProperties;
 import com.paycore.merchant.ApiKeyService;
+import jakarta.servlet.Filter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -21,6 +22,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import tools.jackson.databind.ObjectMapper;
 
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -45,14 +47,21 @@ public class SecurityConfig {
 
     @Bean
     @Order(1)
-    public SecurityFilterChain merchantApiChain(HttpSecurity http, ApiKeyService apiKeyService, ObjectMapper mapper)
-            throws Exception {
+    public SecurityFilterChain merchantApiChain(HttpSecurity http, ApiKeyService apiKeyService, ObjectMapper mapper,
+                                                List<MerchantApiFilter> apiFilters) throws Exception {
         JsonAuthErrorHandlers handlers = new JsonAuthErrorHandlers(mapper);
         http.securityMatcher("/v1/**")
                 .csrf(c -> c.disable())
                 .cors(Customizer.withDefaults())
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .addFilterBefore(new ApiKeyAuthenticationFilter(apiKeyService), BasicAuthenticationFilter.class)
+                .addFilterBefore(new ApiKeyAuthenticationFilter(apiKeyService), BasicAuthenticationFilter.class);
+        // Contributed filters (rate limiting, idempotency, ...) run after authentication, in order.
+        Class<? extends Filter> previous = ApiKeyAuthenticationFilter.class;
+        for (MerchantApiFilter f : apiFilters.stream().sorted(Comparator.comparingInt(MerchantApiFilter::order)).toList()) {
+            http.addFilterAfter(f.filter(), previous);
+            previous = f.filter().getClass();
+        }
+        http
                 .authorizeHttpRequests(a -> a.anyRequest().hasAuthority(MerchantAuthentication.ROLE_API))
                 .exceptionHandling(e -> e.authenticationEntryPoint(handlers.entryPoint())
                         .accessDeniedHandler(handlers.accessDenied()));

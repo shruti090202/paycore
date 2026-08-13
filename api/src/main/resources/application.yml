@@ -79,6 +79,10 @@ springdoc:
   paths-to-exclude: /internal/**
 
 paycore:
+  ratelimit:
+    enabled: ${RATE_LIMIT_ENABLED:true}
+    capacity: ${RATE_LIMIT_CAPACITY:60}            # burst
+    refill-per-second: ${RATE_LIMIT_REFILL_PER_SECOND:1}   # sustained: 60/min
   jwt:
     secret: ${JWT_SECRET}
     ttl-minutes: ${JWT_TTL_MINUTES:30}

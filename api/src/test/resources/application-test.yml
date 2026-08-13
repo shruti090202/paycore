@@ -24,3 +24,14 @@ logging:
 paycore.bank:
   resolve-min-age-seconds: 0
   not-received-grace-seconds: 0
+
+paycore.ratelimit:
+  enabled: true
+  capacity: 100000
+  refill-per-second: 10000
+
+# Concurrency tests open 200-300 simultaneous connections; production keeps the small, memory-bounded listener.
+server.tomcat:
+  max-connections: 2000
+  accept-count: 500
+  threads.max: 200

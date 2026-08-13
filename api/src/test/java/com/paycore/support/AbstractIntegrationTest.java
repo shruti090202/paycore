@@ -5,6 +5,7 @@ import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.PostgreSQLContainer;
 
 /**
@@ -26,8 +27,11 @@ public abstract class AbstractIntegrationTest {
             .withUsername("paycore")
             .withPassword("paycore");
 
+    static final GenericContainer<?> REDIS = new GenericContainer<>("redis:7-alpine").withExposedPorts(6379);
+
     static {
         POSTGRES.start();
+        REDIS.start();
     }
 
     @LocalServerPort
@@ -39,8 +43,7 @@ public abstract class AbstractIntegrationTest {
         registry.add("FLYWAY_URL", POSTGRES::getJdbcUrl);
         registry.add("DATABASE_USER", POSTGRES::getUsername);
         registry.add("DATABASE_PASSWORD", POSTGRES::getPassword);
-        // Redis is wired in phase 4; until then the app must boot without it being reachable.
-        registry.add("REDIS_URL", () -> "redis://localhost:6390");
+        registry.add("REDIS_URL", () -> "redis://" + REDIS.getHost() + ":" + REDIS.getMappedPort(6379));
     }
 
     protected Api api() {
