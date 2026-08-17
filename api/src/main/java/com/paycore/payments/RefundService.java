@@ -6,6 +6,7 @@ import com.paycore.common.error.ErrorType;
 import com.paycore.common.error.PayCoreException;
 import com.paycore.common.id.Ids;
 import com.paycore.common.money.Money;
+import com.paycore.webhooks.OutboxWriter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.jdbc.core.JdbcAggregateTemplate;
@@ -36,18 +37,20 @@ public class RefundService {
     private final BankAttemptRepository attempts;
     private final PaymentService paymentService;
     private final BankGateway bank;
+    private final OutboxWriter outbox;
     private final JdbcAggregateTemplate template;
     private final TransactionTemplate tx;
     private final Clock clock;
 
     public RefundService(PaymentRepository payments, RefundRepository refunds, BankAttemptRepository attempts,
-                         PaymentService paymentService, BankGateway bank, JdbcAggregateTemplate template,
-                         PlatformTransactionManager txManager, Clock clock) {
+                         PaymentService paymentService, BankGateway bank, OutboxWriter outbox,
+                         JdbcAggregateTemplate template, PlatformTransactionManager txManager, Clock clock) {
         this.payments = payments;
         this.refunds = refunds;
         this.attempts = attempts;
         this.paymentService = paymentService;
         this.bank = bank;
+        this.outbox = outbox;
         this.template = template;
         this.tx = new TransactionTemplate(txManager);
         this.clock = clock;
@@ -87,6 +90,7 @@ public class RefundService {
                     null, null, now, null, null));
             paymentService.recordInfoEvent(p.getId(), "refund.created",
                     Map.of("refund_id", r.id(), "amount_minor", amount.minor()));
+            outbox.publish(merchantId, "refund.created", "refund", r.id(), RefundDto.asMap(r));
             return new Prepared(r, attempt.id(), p.getBankRef());
         });
 
@@ -137,9 +141,11 @@ public class RefundService {
         if (approved) {
             Refund done = template.update(r.withStatus(Refund.SUCCEEDED, null, now));
             paymentService.applyRefundSuccess(r.paymentId(), r.id(), Money.of(r.amountMinor(), r.currency()));
+            outbox.publish(r.merchantId(), "refund.succeeded", "refund", r.id(), RefundDto.asMap(done));
             return done;
         }
         Refund failed = template.update(r.withStatus(Refund.FAILED, declineCode, now));
+        outbox.publish(r.merchantId(), "refund.failed", "refund", r.id(), RefundDto.asMap(failed));
         paymentService.recordInfoEvent(r.paymentId(), "refund.failed",
                 Map.of("refund_id", r.id(), "failure_code", declineCode == null ? "unknown" : declineCode));
         return failed;

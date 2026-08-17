@@ -1,7 +1,6 @@
-package com.paycore.api.dto;
+package com.paycore.payments;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.paycore.payments.Payment;
 
 import java.time.Instant;
 import java.util.Map;
@@ -36,6 +35,11 @@ public record PaymentDto(
     }
 
     public record Failure(String code, String message) {
+    }
+
+    /** Same shape as the API response, as a map, for outbox event payloads. */
+    public static java.util.Map<String, Object> asMap(Payment p, String checkoutBaseUrl) {
+        return com.paycore.common.jdbc.Jsonb.of(from(p, checkoutBaseUrl)).asMap();
     }
 
     public static PaymentDto from(Payment p, String checkoutBaseUrl) {

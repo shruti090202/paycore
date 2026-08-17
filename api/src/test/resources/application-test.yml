@@ -35,3 +35,14 @@ server.tomcat:
   max-connections: 2000
   accept-count: 500
   threads.max: 200
+
+# Webhooks: post to the test receiver on localhost, retry immediately, die after 3 attempts; scheduler off
+# so tests drive dispatch explicitly.
+paycore.webhooks:
+  allow-private-urls: true
+  base-delay-seconds: 0
+  max-delay-seconds: 1
+  max-attempts: 3
+  lease-seconds: 30
+paycore.scheduler:
+  enabled: false

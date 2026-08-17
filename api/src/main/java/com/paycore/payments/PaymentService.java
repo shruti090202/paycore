@@ -9,6 +9,8 @@ import com.paycore.common.money.Money;
 import com.paycore.ledger.LedgerService;
 import com.paycore.merchant.Merchant;
 import com.paycore.merchant.MerchantService;
+import com.paycore.webhooks.OutboxWriter;
+import com.paycore.common.config.PayCoreProperties;
 import org.springframework.data.jdbc.core.JdbcAggregateTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,16 +40,21 @@ public class PaymentService {
     private final JdbcAggregateTemplate template;
     private final LedgerService ledger;
     private final MerchantService merchants;
+    private final OutboxWriter outbox;
+    private final String checkoutBaseUrl;
     private final Clock clock;
 
     public PaymentService(PaymentRepository payments, PaymentEventRepository events, PaymentQueries queries,
-                          JdbcAggregateTemplate template, LedgerService ledger, MerchantService merchants, Clock clock) {
+                          JdbcAggregateTemplate template, LedgerService ledger, MerchantService merchants,
+                          OutboxWriter outbox, PayCoreProperties props, Clock clock) {
         this.payments = payments;
         this.events = events;
         this.queries = queries;
         this.template = template;
         this.ledger = ledger;
         this.merchants = merchants;
+        this.outbox = outbox;
+        this.checkoutBaseUrl = props.checkoutBaseUrl();
         this.clock = clock;
     }
 
@@ -93,6 +100,7 @@ public class PaymentService {
         Payment saved = template.insert(p);
         recordEvent(saved, "payment.created", null, PaymentStatus.CREATED, Map.of(
                 "amount_minor", saved.getAmountMinor(), "currency", saved.getCurrency()), now);
+        emit(saved, "payment.created");
         return saved;
     }
 
@@ -141,6 +149,7 @@ public class PaymentService {
         p.transitionTo(PaymentStatus.AUTHORIZED, now);
         p = template.update(p);
         recordEvent(p, "payment.authorized", from, PaymentStatus.AUTHORIZED, Map.of("bank_ref", bankRef), now);
+        emit(p, "payment.authorized");
         if (p.captureMethodEnum() == CaptureMethod.AUTOMATIC) {
             p = doCapture(p, p.amount(), now);
         }
@@ -173,6 +182,7 @@ public class PaymentService {
         p.transitionTo(PaymentStatus.CANCELED, now);
         p = template.update(p);
         recordEvent(p, "payment.canceled", from, PaymentStatus.CANCELED, Map.of(), now);
+        emit(p, "payment.canceled");
         return p;
     }
 
@@ -189,6 +199,7 @@ public class PaymentService {
         p = template.update(p);
         recordEvent(p, "payment.failed", from, PaymentStatus.FAILED,
                 Map.of("failure_code", failureCode, "failure_message", failureMessage == null ? "" : failureMessage), now);
+        emit(p, "payment.failed");
         return p;
     }
 
@@ -236,6 +247,7 @@ public class PaymentService {
         ledger.postRefund(refundId, p.getId(), p.getMerchantId(), amount);
         recordEvent(p, "payment.refunded", from, to, Map.of("refund_id", refundId, "amount_minor", amount.minor(),
                 "refunded_minor", newRefunded.minor()), now);
+        emit(p, "payment.refunded");
         return p;
     }
 
@@ -260,6 +272,7 @@ public class PaymentService {
         recordEvent(p, "payment.captured", from, PaymentStatus.CAPTURED, Map.of(
                 "captured_minor", toCapture.minor(), "fee_minor", fee.minor(),
                 "net_minor", toCapture.minus(fee).minor()), now);
+        emit(p, "payment.captured");
         return p;
     }
 
@@ -279,6 +292,11 @@ public class PaymentService {
                     "Cannot " + verb + " a payment in status '" + from.wire() + "'"
                             + (from.isTerminal() ? " (terminal)" : ""));
         }
+    }
+
+    /** Outbox event in the same transaction: the merchant sees exactly what the API would return right now. */
+    private void emit(Payment p, String type) {
+        outbox.publish(p.getMerchantId(), type, "payment", p.getId(), PaymentDto.asMap(p, checkoutBaseUrl));
     }
 
     private void recordEvent(Payment p, String type, PaymentStatus from, PaymentStatus to, Map<String, ?> data, Instant now) {

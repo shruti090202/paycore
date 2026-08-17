@@ -1,6 +1,6 @@
 package com.paycore.api.v1;
 
-import com.paycore.api.dto.RefundDto;
+import com.paycore.payments.RefundDto;
 import com.paycore.auth.MerchantPrincipal;
 import com.paycore.common.config.OpenApiConfig;
 import com.paycore.payments.PaymentService;

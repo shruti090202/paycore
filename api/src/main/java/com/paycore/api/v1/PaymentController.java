@@ -2,7 +2,7 @@ package com.paycore.api.v1;
 
 import com.paycore.api.dto.LedgerDtos;
 import com.paycore.api.dto.PageDto;
-import com.paycore.api.dto.PaymentDto;
+import com.paycore.payments.PaymentDto;
 import com.paycore.auth.MerchantPrincipal;
 import com.paycore.common.config.OpenApiConfig;
 import com.paycore.common.config.PayCoreProperties;

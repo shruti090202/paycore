@@ -11,7 +11,11 @@ import java.util.Map;
  */
 public record Jsonb(String json) {
 
-    private static final ObjectMapper MAPPER = new ObjectMapper();
+    /** Same conventions as the HTTP API (snake_case, no nulls, ISO instants) so stored JSON == what clients see. */
+    private static final ObjectMapper MAPPER = tools.jackson.databind.json.JsonMapper.builder()
+            .propertyNamingStrategy(tools.jackson.databind.PropertyNamingStrategies.SNAKE_CASE)
+            .changeDefaultPropertyInclusion(incl -> incl.withValueInclusion(com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL))
+            .build();
     public static final Jsonb EMPTY_OBJECT = new Jsonb("{}");
 
     public static Jsonb of(Object value) {

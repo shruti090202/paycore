@@ -79,6 +79,18 @@ springdoc:
   paths-to-exclude: /internal/**
 
 paycore:
+  webhooks:
+    max-attempts: ${WEBHOOK_MAX_ATTEMPTS:8}
+    base-delay-seconds: ${WEBHOOK_BASE_DELAY_SECONDS:10}
+    max-delay-seconds: 900
+    lease-seconds: 60
+    http-timeout-seconds: 10
+    batch-size: 25
+    allow-private-urls: ${WEBHOOK_ALLOW_PRIVATE_URLS:false}   # true only for local/dev (tests post to localhost)
+  scheduler:
+    enabled: ${SCHEDULER_ENABLED:true}
+    interval-ms: 5000
+    active-window-seconds: 600      # after activity, poll for 10 min then let Neon sleep
   ratelimit:
     enabled: ${RATE_LIMIT_ENABLED:true}
     capacity: ${RATE_LIMIT_CAPACITY:60}            # burst
@@ -112,6 +124,9 @@ spring:
   config:
     activate:
       on-profile: local
+paycore:
+  webhooks:
+    allow-private-urls: true
 logging:
   level:
     com.paycore: DEBUG
