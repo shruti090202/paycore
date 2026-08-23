@@ -139,7 +139,7 @@ class RefundIT extends AbstractIntegrationTest {
         assertThat(d.text("/bank_attempts/0/outcome")).isEqualTo("approved");
         assertThat(d.text("/bank_attempts/1/kind")).isEqualTo("refund");
         assertThat(d.at("/bank_attempts/0/latency_ms").asInt()).isGreaterThanOrEqualTo(0);
-        assertThat(d.text("/events/4/type")).isEqualTo("refund.created");
-        assertThat(d.text("/events/5/type")).isEqualTo("payment.refunded");
+        assertThat(d.text("/events/5/type")).isEqualTo("refund.created");
+        assertThat(d.text("/events/6/type")).isEqualTo("payment.refunded");
     }
 }

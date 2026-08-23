@@ -21,6 +21,7 @@ public record PaymentDto(
         Card card,
         String bankRef,
         Failure failure,
+        Risk risk,
         String checkoutUrl,
         String successUrl,
         String cancelUrl,
@@ -35,6 +36,9 @@ public record PaymentDto(
     }
 
     public record Failure(String code, String message) {
+    }
+
+    public record Risk(int score, String decision) {
     }
 
     /** Same shape as the API response, as a map, for outbox event payloads. */
@@ -52,6 +56,7 @@ public record PaymentDto(
                 p.getCardLast4() == null ? null : new Card(p.getCardBrand(), p.getCardLast4()),
                 p.getBankRef(),
                 p.getFailureCode() == null ? null : new Failure(p.getFailureCode(), p.getFailureMessage()),
+                p.getRiskDecision() == null ? null : new Risk(p.getRiskScore() == null ? 0 : p.getRiskScore(), p.getRiskDecision()),
                 checkoutOpen ? checkoutBaseUrl + "/checkout/" + p.getCheckoutToken() : null,
                 p.getSuccessUrl(), p.getCancelUrl(),
                 p.getMetadata() == null ? Map.of() : p.getMetadata().asMap(),

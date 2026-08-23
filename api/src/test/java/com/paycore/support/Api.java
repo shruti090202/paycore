@@ -49,6 +49,12 @@ public class Api {
         return wrap(re);
     }
 
+    public Response put(String path, Object body, Map<String, String> headers) {
+        ResponseEntity<String> re = client.put().uri(path).contentType(MediaType.APPLICATION_JSON)
+                .headers(h -> h.setAll(headers)).body(body == null ? "" : toJson(body)).retrieve().toEntity(String.class);
+        return wrap(re);
+    }
+
     public Response delete(String path, Map<String, String> headers) {
         ResponseEntity<String> re = client.delete().uri(path).headers(h -> h.setAll(headers)).retrieve().toEntity(String.class);
         return wrap(re);

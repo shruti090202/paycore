@@ -251,6 +251,24 @@ public class PaymentService {
         return p;
     }
 
+    /** Stores the risk outcome on the payment (no status change) and in the timeline, with the reasons. */
+    @Transactional
+    public Payment recordRiskDecision(String paymentId, com.paycore.risk.RiskDecision decision, CardSummary card) {
+        Payment p = lock(paymentId);
+        p.setRiskScore(decision.score());
+        p.setRiskDecision(decision.outcome().wire());
+        if (card != null) {
+            p.setCardBrand(card.brand());
+            p.setCardLast4(card.last4());
+            p.setCardFingerprint(card.fingerprint());
+        }
+        p.setUpdatedAt(clock.instant());
+        p = template.update(p);
+        recordEvent(p, "risk.evaluated", null, null, Map.of("score", decision.score(), "decision", decision.outcome().wire(),
+                "reasons", decision.reasons()), clock.instant());
+        return p;
+    }
+
     /** Timeline entries that are not status changes (refund failed/pending, bank timeout). */
     @Transactional
     public void recordInfoEvent(String paymentId, String type, Map<String, ?> data) {

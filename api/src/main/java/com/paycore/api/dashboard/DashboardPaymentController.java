@@ -16,6 +16,7 @@ import com.paycore.payments.PaymentStatus;
 import com.paycore.payments.BankAttempt;
 import com.paycore.payments.BankAttemptRepository;
 import com.paycore.payments.RefundService;
+import com.paycore.risk.RiskService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Size;
@@ -47,15 +48,17 @@ public class DashboardPaymentController {
     private final LedgerService ledgerService;
     private final RefundService refundService;
     private final BankAttemptRepository bankAttempts;
+    private final RiskService risk;
     private final String checkoutBaseUrl;
 
     public DashboardPaymentController(PaymentService paymentService, LedgerService ledgerService,
                                       RefundService refundService, BankAttemptRepository bankAttempts,
-                                      PayCoreProperties props) {
+                                      RiskService risk, PayCoreProperties props) {
         this.paymentService = paymentService;
         this.ledgerService = ledgerService;
         this.refundService = refundService;
         this.bankAttempts = bankAttempts;
+        this.risk = risk;
         this.checkoutBaseUrl = props.checkoutBaseUrl();
     }
 
@@ -71,8 +74,12 @@ public class DashboardPaymentController {
         }
     }
 
+    public record RiskDto(int score, String decision, Object reasons) {
+    }
+
     public record PaymentDetail(PaymentDto payment, List<EventDto> events, List<LedgerDtos.JournalEntryDto> ledger,
-                                List<RefundDto> refunds, List<BankAttemptDto> bankAttempts) {
+                                List<RefundDto> refunds, List<BankAttemptDto> bankAttempts, RiskDto risk,
+                                String cardFingerprint) {
     }
 
     public record RefundRequest(@Min(1) Long amountMinor, @Size(max = 500) String reason) {
@@ -110,7 +117,10 @@ public class DashboardPaymentController {
                 .stream().map(LedgerDtos::from).toList();
         List<RefundDto> refunds = refundService.forPayment(p.getId()).stream().map(RefundDto::from).toList();
         List<BankAttemptDto> attempts = bankAttempts.findByPaymentIdOrderByIdAsc(p.getId()).stream().map(BankAttemptDto::from).toList();
-        return new PaymentDetail(PaymentDto.from(p, checkoutBaseUrl), events, ledger, refunds, attempts);
+        RiskDto riskDto = risk.decisionFor(p.getId(), p.getMerchantId())
+                .map(r -> new RiskDto(r.score(), r.decision(), r.reasons().node())).orElse(null);
+        return new PaymentDetail(PaymentDto.from(p, checkoutBaseUrl), events, ledger, refunds, attempts, riskDto,
+                p.getCardFingerprint());
     }
 
     @PostMapping("/payments/{id}/refunds")

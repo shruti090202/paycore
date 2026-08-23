@@ -7,6 +7,9 @@ import com.paycore.banksim.TestCards;
 import com.paycore.common.error.ErrorType;
 import com.paycore.common.error.PayCoreException;
 import com.paycore.common.id.Ids;
+import com.paycore.risk.RiskContext;
+import com.paycore.risk.RiskDecision;
+import com.paycore.risk.RiskService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.jdbc.core.JdbcAggregateTemplate;
@@ -42,18 +45,20 @@ public class CheckoutService {
     private final BankAttemptRepository attempts;
     private final BankGateway bank;
     private final CardFingerprints fingerprints;
+    private final RiskService risk;
     private final JdbcAggregateTemplate template;
     private final TransactionTemplate tx;
     private final Clock clock;
 
     public CheckoutService(PaymentRepository payments, PaymentService paymentService, BankAttemptRepository attempts,
-                           BankGateway bank, CardFingerprints fingerprints, JdbcAggregateTemplate template,
+                           BankGateway bank, CardFingerprints fingerprints, RiskService risk, JdbcAggregateTemplate template,
                            PlatformTransactionManager txManager, Clock clock) {
         this.payments = payments;
         this.paymentService = paymentService;
         this.attempts = attempts;
         this.bank = bank;
         this.fingerprints = fingerprints;
+        this.risk = risk;
         this.template = template;
         this.tx = new TransactionTemplate(txManager);
         this.clock = clock;
@@ -77,8 +82,13 @@ public class CheckoutService {
         String fingerprint = fingerprints.fingerprint(testCard.number());
         PaymentService.CardSummary summary = new PaymentService.CardSummary(testCard.brand(), testCard.last4(), fingerprint);
 
+        // Risk (Redis velocity counters etc.) is evaluated before any transaction is opened.
+        Payment preview = paymentService.requireByCheckoutToken(token);
+        RiskDecision decision = risk.evaluate(new RiskContext(preview.getMerchantId(), preview.getId(), preview.getAmountMinor(),
+                preview.getCurrency(), fingerprint, testCard.number(), preview.getCustomerEmail(), preview.getCustomerRef()));
+
         // T1 -----------------------------------------------------------------------------------------------
-        record Prepared(String paymentId, String attemptId, String bankRef, long amount, String currency) {
+        record Prepared(String paymentId, String attemptId, String bankRef, long amount, String currency, boolean blocked) {
         }
         Prepared prep = tx.execute(status -> {
             Payment p = payments.lockByCheckoutToken(token)
@@ -94,13 +104,24 @@ public class CheckoutService {
             if (isExpired(p)) {
                 throw new PayCoreException(ErrorType.STATE_CONFLICT, "checkout_session_expired", "This checkout session has expired");
             }
+            paymentService.recordRiskDecision(p.getId(), decision, summary);
+            risk.record(p.getId(), p.getMerchantId(), decision);
+            if (decision.outcome() == RiskDecision.Outcome.BLOCK) {
+                // Refused before the bank is ever contacted. The shopper sees a generic decline; the merchant
+                // sees failure_code risk_blocked and the reasons in the dashboard.
+                paymentService.markFailed(p.getId(), "risk_blocked", DeclineCodes.message("fraudulent"));
+                return new Prepared(p.getId(), null, null, p.getAmountMinor(), p.getCurrency(), true);
+            }
             String bankRef = Ids.newId("bref");
             BankAttempt attempt = template.insert(new BankAttempt(Ids.newId("batt"), p.getId(), null,
                     BankAttempt.KIND_AUTHORIZE, bankRef, p.getAmountMinor(), p.getCurrency(), BankAttempt.IN_FLIGHT,
                     null, null, clock.instant(), null, null));
             paymentService.markPendingBank(p.getId(), bankRef, summary);
-            return new Prepared(p.getId(), attempt.id(), bankRef, p.getAmountMinor(), p.getCurrency());
+            return new Prepared(p.getId(), attempt.id(), bankRef, p.getAmountMinor(), p.getCurrency(), false);
         });
+        if (prep.blocked()) {
+            return new ConfirmResult(ResultKind.DECLINED, payments.findById(prep.paymentId()).orElseThrow(), "card_declined", null);
+        }
 
         // Bank call (no transaction) -----------------------------------------------------------------------
         Instant started = clock.instant();

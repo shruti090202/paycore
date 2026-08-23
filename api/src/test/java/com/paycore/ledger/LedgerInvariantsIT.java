@@ -168,6 +168,16 @@ class LedgerInvariantsIT extends AbstractIntegrationTest {
     }
 
     @Test
+    void captureThatIsEntirelyFeePostsTwoLegsAndNoMerchantCredit() {
+        // 3.00 INR at 2% + 3.00 fixed: fee is capped at 3.00, the merchant nets nothing, and a zero posting is illegal.
+        Merchant m = merchants.signup("Tiny Co", Api.uniqueEmail(), "correct-horse-battery");
+        String ref = "pay_tiny_" + UUID.randomUUID().toString().substring(0, 8);
+        JournalEntry e = tx.execute(s -> ledger.postCapture(ref, m.id(), Money.of(300, "INR"), Money.of(300, "INR")));
+        assertThat(repo.findPostingsByEntry(e.id())).hasSize(2);
+        assertThat(ledger.merchantBalance(m.id(), "INR")).isEqualTo(Money.zero("INR"));
+    }
+
+    @Test
     void ledgerServiceRefusesUnbalancedLegsBeforeTouchingTheDatabase() {
         assertThatThrownBy(() -> tx.executeWithoutResult(s -> ledger.post("adjustment", "test", UUID.randomUUID().toString(), "bad",
                 java.util.List.of(

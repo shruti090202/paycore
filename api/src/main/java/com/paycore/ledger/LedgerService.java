@@ -73,7 +73,9 @@ public class LedgerService {
         }
         List<Leg> legs = new ArrayList<>();
         legs.add(Leg.debit(AccountCodes.bankReceivable(ccy), AccountType.ASSET, null, gross));
-        legs.add(Leg.credit(AccountCodes.merchantPayable(merchantId, ccy), AccountType.LIABILITY, merchantId, net));
+        if (net.isPositive()) { // a tiny capture can be entirely fee: then the merchant leg is simply absent
+            legs.add(Leg.credit(AccountCodes.merchantPayable(merchantId, ccy), AccountType.LIABILITY, merchantId, net));
+        }
         if (fee.isPositive()) {
             legs.add(Leg.credit(AccountCodes.feeRevenue(ccy), AccountType.REVENUE, null, fee));
         }

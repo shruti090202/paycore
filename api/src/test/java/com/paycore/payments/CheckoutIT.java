@@ -57,7 +57,7 @@ class CheckoutIT extends AbstractIntegrationTest {
         assertThat(p.raw()).doesNotContain("4242424242424242");
 
         List<String> types = paymentService.timeline(c.paymentId()).stream().map(PaymentEvent::type).toList();
-        assertThat(types).containsExactly("payment.created", "payment.pending_bank", "payment.authorized", "payment.captured");
+        assertThat(types).containsExactly("payment.created", "risk.evaluated", "payment.pending_bank", "payment.authorized", "payment.captured");
 
         // The bank's own books have the authorization under our reference.
         assertThat(jdbc.sql("SELECT outcome FROM banksim_transactions WHERE bank_ref = :r").param("r", p.text("/bank_ref"))
