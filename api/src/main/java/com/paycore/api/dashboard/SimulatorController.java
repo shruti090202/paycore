@@ -29,7 +29,8 @@ public class SimulatorController {
         this.config = config;
     }
 
-    public record SettingsDto(double randomDeclineRate, double randomTimeoutRate, int minLatencyMs, int maxLatencyMs) {
+    public record SettingsDto(double randomDeclineRate, double randomTimeoutRate, int minLatencyMs, int maxLatencyMs,
+                              double settlementAnomalyRate) {
     }
 
     public record TestCardDto(String number, String brand, String behaviour, String declineCode, String description) {
@@ -38,14 +39,15 @@ public class SimulatorController {
     @GetMapping
     public SettingsDto get() {
         var s = config.get();
-        return new SettingsDto(s.randomDeclineRate(), s.randomTimeoutRate(), s.minLatencyMs(), s.maxLatencyMs());
+        return new SettingsDto(s.randomDeclineRate(), s.randomTimeoutRate(), s.minLatencyMs(), s.maxLatencyMs(), s.settlementAnomalyRate());
     }
 
     @PutMapping
     @Operation(summary = "Adjust decline/timeout rates and latency for APPROVE-type test cards")
     public SettingsDto set(@RequestBody SettingsDto dto) {
         try {
-            config.set(new BankSimConfig.Settings(dto.randomDeclineRate(), dto.randomTimeoutRate(), dto.minLatencyMs(), dto.maxLatencyMs()));
+            config.set(new BankSimConfig.Settings(dto.randomDeclineRate(), dto.randomTimeoutRate(), dto.minLatencyMs(), dto.maxLatencyMs(),
+                    dto.settlementAnomalyRate()));
         } catch (IllegalArgumentException e) {
             throw PayCoreException.invalid("simulator_settings_invalid", e.getMessage(), null);
         }

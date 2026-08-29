@@ -181,15 +181,16 @@ class WebhookIT extends AbstractIntegrationTest {
     }
 
     @Test
-    void outboxRowIsWrittenInThePaymentTransactionAndCannotBeDeleted() throws Exception {
+    void outboxRowIsWrittenInThePaymentTransactionAndAttemptsAreImmutable() throws Exception {
         Api api = api();
         String key = api.signupAndGetApiKey();
         String merchantId = api.get("/v1/account", Api.bearer(key)).text("/id");
         Flows.createPayment(api, key, 100, "automatic");
         long events = jdbc.sql("SELECT COUNT(*) FROM outbox_events WHERE merchant_id = :m").param("m", merchantId).query(Long.class).single();
-        assertThat(events).isEqualTo(1);
+        assertThat(events).as("event exists before any dispatcher ran: it was written in the payment transaction").isEqualTo(1);
+        // Attempt logs are history: they may be pruned by retention but never rewritten.
         org.assertj.core.api.Assertions.assertThatThrownBy(() ->
-                jdbc.sql("DELETE FROM outbox_events WHERE merchant_id = :m").param("m", merchantId).update())
+                jdbc.sql("UPDATE webhook_delivery_attempts SET status_code = 200").update())
                 .hasMessageContaining("append-only");
     }
 }

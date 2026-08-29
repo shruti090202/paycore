@@ -46,6 +46,11 @@ services:
       DEMO_API_KEY: sk_test_localdemo000000000000000000000000
       CHECKOUT_BASE_URL: http://localhost:3000
       CORS_ALLOWED_ORIGINS: http://localhost:3000
+      # Load tests set these high from the shell (RATE_LIMIT_CAPACITY=100000 docker compose ...); demos keep 60/min.
+      RATE_LIMIT_CAPACITY: ${RATE_LIMIT_CAPACITY:-60}
+      RATE_LIMIT_REFILL_PER_SECOND: ${RATE_LIMIT_REFILL_PER_SECOND:-1}
+      # Override to compare JVM flag sets under load (see load/README.md).
+      JAVA_OPTS: ${JAVA_OPTS:--XX:MaxRAMPercentage=60.0 -XX:+UseSerialGC -XX:TieredStopAtLevel=1 -Xss512k -XX:MaxMetaspaceSize=128m -XX:ReservedCodeCacheSize=48m -XX:+ExitOnOutOfMemoryError -Djava.security.egd=file:/dev/./urandom}
     ports: ["8080:8080"]
     # Mirror Render free tier so local numbers are honest.
     mem_limit: 512m
