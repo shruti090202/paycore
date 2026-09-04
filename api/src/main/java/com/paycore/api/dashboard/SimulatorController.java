@@ -4,6 +4,8 @@ import com.paycore.banksim.BankSimConfig;
 import com.paycore.banksim.TestCards;
 import com.paycore.common.config.OpenApiConfig;
 import com.paycore.common.error.PayCoreException;
+import com.paycore.jobs.JobRun;
+import com.paycore.jobs.JobRunner;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -23,10 +25,29 @@ import java.util.List;
 @SecurityRequirement(name = OpenApiConfig.DASHBOARD_JWT)
 public class SimulatorController {
 
-    private final BankSimConfig config;
+    /** Jobs any signed-in merchant may trigger for demos. Real scheduling is the cron workflow -> /internal/jobs. */
+    private static final java.util.Set<String> DEMO_JOBS = java.util.Set.of("webhook-dispatch", "bank-status-check",
+            "settlement-generate", "reconcile", "payout-run", "retention-cleanup");
 
-    public SimulatorController(BankSimConfig config) {
+    private final BankSimConfig config;
+    private final JobRunner jobs;
+
+    public SimulatorController(BankSimConfig config, JobRunner jobs) {
         this.config = config;
+        this.jobs = jobs;
+    }
+
+    public record JobResultDto(String job, String status, java.util.Map<String, Object> result, String error) {
+    }
+
+    @org.springframework.web.bind.annotation.PostMapping("/jobs/{name}")
+    @Operation(summary = "Run a background job now (demo convenience; production uses the scheduled workflow)")
+    public JobResultDto runJob(@org.springframework.web.bind.annotation.PathVariable String name) {
+        if (!DEMO_JOBS.contains(name)) {
+            throw PayCoreException.notFound("job", name);
+        }
+        JobRun run = jobs.run(name, "dashboard");
+        return new JobResultDto(name, run.status(), run.result() == null ? null : run.result().asMap(), run.error());
     }
 
     public record SettingsDto(double randomDeclineRate, double randomTimeoutRate, int minLatencyMs, int maxLatencyMs,

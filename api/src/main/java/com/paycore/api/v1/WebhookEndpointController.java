@@ -90,6 +90,15 @@ public class WebhookEndpointController {
         return PageDto.of(rows.stream().limit(lim).map(WebhookDtos.EventDto::from).toList(), next);
     }
 
+    @GetMapping("/events/{id}/deliveries")
+    @Operation(summary = "Delivery status of an event to each of your endpoints")
+    public List<WebhookDtos.DeliveryDto> eventDeliveries(@AuthenticationPrincipal MerchantPrincipal principal, @PathVariable String id) {
+        repo.event(id, principal.merchantId()).orElseThrow(() -> PayCoreException.notFound("event", id));
+        return repo.deliveriesForEvent(id, principal.merchantId()).stream()
+                .map(d -> WebhookDtos.DeliveryDto.from(d, null, repo.attempts(d.id()).stream().map(WebhookDtos.AttemptDto::from).toList()))
+                .toList();
+    }
+
     @GetMapping("/events/{id}")
     public WebhookDtos.EventDto event(@AuthenticationPrincipal MerchantPrincipal principal, @PathVariable String id) {
         return repo.event(id, principal.merchantId()).map(WebhookDtos.EventDto::from)

@@ -58,6 +58,9 @@ public class WebhookDispatcher {
         this.clock = clock;
         var factory = new org.springframework.http.client.JdkClientHttpRequestFactory(
                 java.net.http.HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(3))
+                        // HTTP/1.1 only: the JDK default (HTTP/2 with h2c upgrade on plain http) is dropped by some
+                        // receivers (e.g. Node servers), and webhook consumers are arbitrary third-party servers.
+                        .version(java.net.http.HttpClient.Version.HTTP_1_1)
                         .followRedirects(java.net.http.HttpClient.Redirect.NEVER).build());
         factory.setReadTimeout(Duration.ofSeconds(props.httpTimeoutSeconds()));
         this.http = restClientBuilder.clone()

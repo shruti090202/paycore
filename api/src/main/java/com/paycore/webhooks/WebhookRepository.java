@@ -189,6 +189,11 @@ public class WebhookRepository {
                 .param("id", id).param("m", merchantId).query(this::delivery).optional();
     }
 
+    public List<WebhookDelivery> deliveriesForEvent(String eventId, String merchantId) {
+        return jdbc.sql("SELECT * FROM webhook_deliveries WHERE event_id = :e AND merchant_id = :m ORDER BY id")
+                .param("e", eventId).param("m", merchantId).query(this::delivery).list();
+    }
+
     public List<WebhookDelivery> deliveriesForMerchant(String merchantId, String status, String endpointId, String cursor, int limit) {
         StringBuilder sql = new StringBuilder("SELECT * FROM webhook_deliveries WHERE merchant_id = :m");
         java.util.Map<String, Object> params = new java.util.HashMap<>();
