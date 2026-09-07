@@ -1,0 +1,32 @@
+name: Scheduled jobs (daily)
+
+# End-of-day cycle: the bank's settlement file -> reconciliation -> payouts, then retention cleanup.
+# Required repository secrets: API_BASE_URL, INTERNAL_JOB_TOKEN.
+
+on:
+  schedule:
+    - cron: "30 0 * * *"   # 00:30 UTC daily
+  workflow_dispatch:
+
+concurrency:
+  group: jobs-daily
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Trigger jobs in order
+        env:
+          API: ${{ secrets.API_BASE_URL }}
+          TOKEN: ${{ secrets.INTERNAL_JOB_TOKEN }}
+        run: |
+          set -u
+          if [ -z "$API" ] || [ -z "$TOKEN" ]; then echo "API_BASE_URL / INTERNAL_JOB_TOKEN secrets not set"; exit 1; fi
+          for job in settlement-generate reconcile payout-run retention-cleanup; do
+            echo "== $job"
+            curl --silent --show-error --fail-with-body --max-time 180 --retry 4 --retry-delay 20 --retry-all-errors \
+              -X POST "$API/internal/jobs/$job" -H "X-Internal-Token: $TOKEN" -H "Content-Type: application/json" -d '{}'
+            echo
+          done

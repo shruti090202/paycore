@@ -5,9 +5,11 @@ spring:
     virtual:
       enabled: true            # Java 21 virtual threads: blocking JDBC/Redis calls don't pin a platform thread
   datasource:
+    # Either a JDBC URL + DATABASE_USER/DATABASE_PASSWORD, or a plain postgres:// URI (parsed by
+    # DatabaseUrlEnvironmentPostProcessor); the latter is what Neon/Render/Supabase hand out.
     url: ${DATABASE_URL}
-    username: ${DATABASE_USER}
-    password: ${DATABASE_PASSWORD}
+    username: ${DATABASE_USER:}
+    password: ${DATABASE_PASSWORD:}
     hikari:
       # Sized for Render free (512 MB / 0.1 CPU) + Neon free (compute must be allowed to suspend).
       maximum-pool-size: ${DB_POOL_MAX:4}
@@ -18,9 +20,9 @@ spring:
       keepalive-time: 0        # never keep Neon awake artificially
       pool-name: paycore
   flyway:
-    url: ${FLYWAY_URL:${DATABASE_URL}}   # Neon: DIRECT host for migrations; app traffic goes through the pooler
-    user: ${DATABASE_USER}
-    password: ${DATABASE_PASSWORD}
+    url: ${FLYWAY_URL:${DATABASE_URL}}   # Neon: DIRECT host for migrations (DATABASE_DIRECT_URL); app traffic goes through the pooler
+    user: ${DATABASE_USER:}
+    password: ${DATABASE_PASSWORD:}
     locations: classpath:db/migration
   data:
     redis:

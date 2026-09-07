@@ -1,0 +1,61 @@
+# Render Blueprint: one free Docker web service for the API. Neon (Postgres) and Upstash (Redis) are external;
+# their URLs are pasted into the service's environment in the Render dashboard (sync: false below).
+# Docs: https://render.com/docs/blueprint-spec
+services:
+  - type: web
+    name: paycore-api
+    runtime: docker
+    plan: free
+    region: frankfurt            # pick the region closest to your Neon project
+    dockerfilePath: ./api/Dockerfile
+    dockerContext: ./api
+    healthCheckPath: /actuator/health
+    autoDeployTrigger: commit
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+      # ---- external services (paste in the dashboard) ----
+      - key: DATABASE_URL          # Neon POOLED connection string (host contains "-pooler"), postgresql://...
+        sync: false
+      - key: DATABASE_DIRECT_URL   # Neon DIRECT connection string (no "-pooler"); used by Flyway only
+        sync: false
+      - key: REDIS_URL             # Upstash: rediss://default:<password>@<host>:6379
+        sync: false
+      - key: SENTRY_DSN            # optional
+        sync: false
+      # ---- URLs of the web app (Vercel) ----
+      - key: CHECKOUT_BASE_URL     # e.g. https://paycore-web.vercel.app
+        sync: false
+      - key: CORS_ALLOWED_ORIGINS  # same value; comma-separated if you add a custom domain
+        sync: false
+      # ---- secrets Render generates for you ----
+      - key: JWT_SECRET
+        generateValue: true
+      - key: APP_ENCRYPTION_KEY
+        generateValue: true
+      - key: CARD_FINGERPRINT_KEY
+        generateValue: true
+      - key: INTERNAL_JOB_TOKEN    # copy this value into the GitHub repository secret of the same name
+        generateValue: true
+      - key: DEMO_MERCHANT_PASSWORD
+        generateValue: true
+      # ---- demo merchant ----
+      - key: DEMO_MERCHANT_EMAIL
+        value: demo@paycore.dev
+      - key: DEMO_API_KEY          # sk_test_ + at least 16 chars; also set as PAYCORE_DEMO_SECRET_KEY on Vercel
+        sync: false
+      # ---- free-tier tuning ----
+      - key: DB_POOL_MAX
+        value: "4"
+      - key: TOMCAT_MAX_THREADS
+        value: "32"
+      - key: WEBHOOK_ALLOW_PRIVATE_URLS
+        value: "false"
+      - key: SCHEDULER_ENABLED
+        value: "true"
+      - key: RATE_LIMIT_CAPACITY
+        value: "60"
+      - key: RATE_LIMIT_REFILL_PER_SECOND
+        value: "1"
+      - key: JAVA_OPTS
+        value: "-XX:MaxRAMPercentage=60.0 -XX:+UseSerialGC -XX:TieredStopAtLevel=1 -Xss512k -XX:MaxMetaspaceSize=128m -XX:ReservedCodeCacheSize=48m -XX:+ExitOnOutOfMemoryError -Djava.security.egd=file:/dev/./urandom"

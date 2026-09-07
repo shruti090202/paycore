@@ -1,0 +1,38 @@
+name: Scheduled jobs (frequent)
+
+# Render free instances sleep after 15 idle minutes, so nothing in-process can be relied on for background work.
+# This workflow wakes the API and drains the outbox / resolves pending bank calls. GitHub cron minimum is 5 min and
+# may be delayed at the top of the hour; every 15 min keeps the free-tier budgets comfortable
+# (Render: ~744 h/month if always awake, Neon: compute suspends between runs).
+#
+# Required repository secrets: API_BASE_URL (e.g. https://paycore-api.onrender.com), INTERNAL_JOB_TOKEN.
+# Note: GitHub disables scheduled workflows after 60 days without repository activity — push something now and then.
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: jobs-frequent
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Trigger jobs
+        env:
+          API: ${{ secrets.API_BASE_URL }}
+          TOKEN: ${{ secrets.INTERNAL_JOB_TOKEN }}
+        run: |
+          set -u
+          if [ -z "$API" ] || [ -z "$TOKEN" ]; then echo "API_BASE_URL / INTERNAL_JOB_TOKEN secrets not set"; exit 1; fi
+          # First call may hit a cold start (~1 min): retry with a generous timeout.
+          for job in webhook-dispatch bank-status-check; do
+            echo "== $job"
+            curl --silent --show-error --fail-with-body --max-time 120 --retry 4 --retry-delay 20 --retry-all-errors \
+              -X POST "$API/internal/jobs/$job" -H "X-Internal-Token: $TOKEN" -H "Content-Type: application/json" -d '{}'
+            echo
+          done
