@@ -112,6 +112,7 @@ export default function CheckoutPage() {
           <p className="text-xs uppercase tracking-widest text-zinc-500">Pay {s.merchant_name}</p>
           <p className="mt-1 text-3xl font-semibold">{money(s.amount_minor, s.currency)}</p>
           {s.description && <p className="mt-1 text-sm text-zinc-500">{s.description}</p>}
+          {s.customer_email && <p className="mt-1 text-xs text-zinc-500">Paying as {s.customer_email}</p>}
 
           {pending || s.status === "pending_bank" ? (
             <Alert kind="warn">We are confirming the payment with your bank… this page updates automatically.</Alert>

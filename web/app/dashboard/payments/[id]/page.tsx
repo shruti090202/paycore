@@ -49,6 +49,8 @@ export default function PaymentDetailPage() {
   const p = d.payment;
   const refundable = p.captured_minor - p.refunded_minor - d.refunds.filter((r) => r.status === "pending").reduce((s, r) => s + r.amount_minor, 0);
   const canRefund = ["captured", "partially_refunded"].includes(p.status) && refundable > 0;
+  // Fees are recorded on the capture event(s); sum them so the merchant can see what the ledger kept.
+  const feeMinor = d.events.filter((e) => e.type === "payment.captured").reduce<number | null>((s, e) => (typeof e.data.fee_minor === "number" ? (s ?? 0) + e.data.fee_minor : s), null);
 
   return (
     <div className="space-y-6">
@@ -76,6 +78,7 @@ export default function PaymentDetailPage() {
             rows={[
               ["Captured", money(p.captured_minor, p.currency)],
               ["Refunded", money(p.refunded_minor, p.currency)],
+              ["Fee kept", feeMinor === null ? "—" : `${money(feeMinor, p.currency)} (fees are not returned on refund)`],
               ["Capture method", p.capture_method],
               ["Customer", p.customer?.email ?? "—"],
               ["Card", p.card ? `${p.card.brand} •••• ${p.card.last4}` : "—"],
@@ -145,7 +148,12 @@ export default function PaymentDetailPage() {
               <Td className="whitespace-nowrap text-zinc-500">{when(e.created_at)}</Td>
               <Td mono>{e.type}</Td>
               <Td>{e.from_status || e.to_status ? <span className="text-xs">{e.from_status ?? "∅"} → {e.to_status ?? "∅"}</span> : ""}</Td>
-              <Td mono className="max-w-md truncate">{JSON.stringify(e.data)}</Td>
+              <Td mono className="max-w-xl">
+                <details>
+                  <summary className="cursor-pointer truncate text-zinc-600 dark:text-zinc-400">{summarize(e.data)}</summary>
+                  <pre className="mt-1 whitespace-pre-wrap break-all rounded bg-zinc-100 p-2 dark:bg-zinc-800">{JSON.stringify(e.data, null, 2)}</pre>
+                </details>
+              </Td>
             </tr>
           ))}
         </Table>
@@ -193,4 +201,14 @@ export default function PaymentDetailPage() {
       </Card>
     </div>
   );
+}
+
+/** One line for the collapsed timeline row: failure reasons first, otherwise the first few fields. */
+function summarize(data: Record<string, unknown>): string {
+  const keys = Object.keys(data);
+  if (keys.length === 0) return "—";
+  const preferred = ["failure_code", "failure_message", "decline_code", "decision", "reason"].filter((k) => k in data);
+  const shown = (preferred.length > 0 ? preferred : keys).slice(0, 3);
+  const text = shown.map((k) => `${k}=${typeof data[k] === "object" ? JSON.stringify(data[k]) : String(data[k])}`).join("  ");
+  return shown.length < keys.length ? `${text}  …` : text;
 }

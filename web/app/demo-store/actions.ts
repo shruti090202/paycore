@@ -11,6 +11,8 @@ export async function buy(formData: FormData) {
   const sku = String(formData.get("sku") ?? "");
   const product = PRODUCTS.find((p) => p.sku === sku);
   if (!product) throw new Error("unknown product");
+  const typed = String(formData.get("email") ?? "").trim();
+  const email = typed.includes("@") ? typed : "shopper@acme-goods.test";
 
   const h = await headers();
   const proto = h.get("x-forwarded-proto") ?? "http";
@@ -23,7 +25,7 @@ export async function buy(formData: FormData) {
       amount_minor: product.price_minor,
       currency: "INR",
       description: `${product.name} (${orderId})`,
-      customer: { email: "shopper@acme-goods.test", ref: "cust_demo" },
+      customer: { email, ref: "cust_demo" },
       success_url: `${origin}/demo-store/success`,
       cancel_url: `${origin}/demo-store`,
       metadata: { order_id: orderId, sku: product.sku },
