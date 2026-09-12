@@ -17,6 +17,23 @@ for the card networks, complete with a daily settlement file that gets reconcile
 
 The API runs on a free instance that sleeps after 15 idle minutes; the first request can take up to a minute.
 
+**Try it in five minutes** (everything is sandboxed: test cards only, a shared demo merchant, no real money)
+
+1. Open the [demo store](https://paycore-pearl.vercel.app/demo-store), buy something with card `4242 4242 4242 4242`
+   (any future expiry, any CVC). The success page shows the signed webhook the store received.
+2. Buy again with `4000 0000 0000 0002` (declined) and `4000 0000 0000 5126` (bank timeout, resolved later by a job).
+3. Open the [dashboard](https://paycore-pearl.vercel.app/login?demo=1) → **Payments** → your payment: timeline, bank
+   attempts, risk score and the double-entry ledger lines. Refund part of it; try to refund more than was captured.
+4. **Risk → Blocklist**: block the email you used in the store, buy again → refused before the bank is called.
+5. **Simulator**: raise the bank's decline/timeout rate, run the `bank-status-check` and `settlement-generate` +
+   `reconcile` jobs by hand, then look at **Reconciliation** and **Balance**.
+6. **API keys** → create a key and use the [Swagger UI](https://paycore-api-gbvz.onrender.com/swagger-ui/index.html)
+   or the curl calls under [API in one minute](#api-in-one-minute). Keys you create are yours to revoke.
+
+The demo merchant is shared, so you will see other visitors' test payments next to yours. There is nothing to
+break: every invariant (balanced ledger, legal state transitions, refunds ≤ captures) is enforced by the database,
+and the nightly retention job prunes old operational rows. Do not enter real card numbers — they are rejected.
+
 ---
 
 ## What it does
@@ -129,7 +146,7 @@ Any future expiry and any 3–4 digit CVC work.
 ## API in one minute
 
 ```bash
-API=https://<render-service>
+API=https://paycore-api-gbvz.onrender.com
 KEY=sk_test_...          # Dashboard → API keys
 
 # create a payment, get a hosted checkout URL
