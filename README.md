@@ -180,7 +180,7 @@ web/       Next.js 16 · React 19 · TypeScript · Tailwind 4 (dashboard, checko
 load/      k6 scenario + measured baseline (load/README.md)
 scripts/   smoke.sh — end-to-end check against any running API
 .github/   ci.yml (API tests, web build, k6 gate), jobs-frequent.yml, jobs-daily.yml
-render.yaml, docker-compose.yml, DEPLOY.md, CONVENTIONS.md, PROGRESS.md
+render.yaml, docker-compose.yml, DEPLOY.md, CONVENTIONS.md
 ```
 
 ## Local setup
