@@ -9,10 +9,11 @@ for the card networks, complete with a daily settlement file that gets reconcile
 > **Test cards only.** PayCore never processes real card data. Only the [documented test card numbers](#test-cards)
 > are accepted; anything else is rejected before it is stored or logged. Do not enter real card numbers anywhere.
 
-**Live demo:** _(links are filled in after deployment — see [DEPLOY.md](DEPLOY.md))_
-- Demo store: `https://<vercel-app>/demo-store`
-- Merchant dashboard: `https://<vercel-app>/login?demo=1` (one-click demo login, no signup)
-- API reference (Swagger UI): `https://<render-service>/swagger-ui/index.html`
+**Live demo**
+- Demo store: https://paycore-pearl.vercel.app/demo-store
+- Merchant dashboard: https://paycore-pearl.vercel.app/login?demo=1 (one-click demo login, no signup)
+- API reference (Swagger UI): https://paycore-api-gbvz.onrender.com/swagger-ui/index.html
+- Health: https://paycore-api-gbvz.onrender.com/actuator/health
 
 The API runs on a free instance that sleeps after 15 idle minutes; the first request can take up to a minute.
 
@@ -223,8 +224,18 @@ competes with request handling, and a service that spins down every 15 idle minu
 
 CI gate: p95 < 250 ms (create/session/get), < 500 ms (confirm), < 750 ms (flow), failures < 1 %.
 
-Live deployment (Render free, Neon, Upstash): _to be recorded after deployment — cold start time, warm p95 from the
-smoke test, monthly Neon CU-hours and Upstash command usage._
+Live deployment (Render free in Frankfurt, Neon, Upstash), measured 2026-09-12 from a client in India:
+
+- `scripts/smoke.sh` against the live API: 17/17 checks pass (idempotent replay, checkout capture, refund, ledger,
+  events, rate-limit headers from Upstash).
+- Warm requests: health 230–560 ms; a dashboard list that hits Postgres 240–350 ms once Neon is awake, and
+  **0.99 s for the first query after Neon suspended** (compute resume). Network round-trip India→Frankfurt is
+  included in all of these.
+- A true Render cold start was not observed during measurement: the 15-minute cron keeps the instance warm, so
+  spin-downs happen only when a cron delay and a quiet period coincide. Expect ~30–60 s in that case (JVM start
+  on a fractional CPU plus Neon resume).
+- Monthly Neon CU-hours and Upstash command counts: to be read from the providers' dashboards after the first full
+  month (not yet available).
 
 ## Limitations and honest notes
 
