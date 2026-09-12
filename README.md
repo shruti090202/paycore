@@ -80,6 +80,22 @@ and the nightly retention job prunes old operational rows. Do not enter real car
   `/checkout/**` session token; `/internal/**` shared token for cron. Credentials are never interchangeable.
 - **Postgres is the only system of record.** Redis holds nothing that cannot be lost.
 
+## Why this stack
+
+- **Spring Boot 4.1 / Java 21** rather than 3.x: Boot 3.5 reached end of OSS support, and 4.x brings Jackson 3 and
+  first-class virtual threads. Virtual threads matter here: every request blocks on JDBC and Redis, and a
+  fractional-CPU container cannot afford a large platform-thread pool.
+- **Spring Data JDBC, not JPA**: a ledger wants explicit SQL and explicit transactions. No lazy loading, no dirty
+  checking, no surprise flushes; every write is a statement you can read. Records map cleanly to rows.
+- **Postgres triggers and CHECKs alongside Java validation**: the database is the last line of defence against
+  bugs, concurrency and anyone with a SQL console. The tests attack it directly with raw SQL to prove that.
+- **Redis only where losing data is harmless**: rate-limit buckets and fraud velocity counters. Everything that
+  must survive lives in Postgres. This also keeps the free Upstash quota comfortable.
+- **Next.js App Router with server actions**: the demo store keeps its merchant secret server-side; the browser
+  never sees an API key. Tailwind because the dashboard needed to be built fast without a design system.
+- **GitHub Actions cron for background jobs**: a free instance that sleeps cannot run its own scheduler reliably,
+  so jobs are HTTP endpoints behind a shared token and an external clock triggers them.
+
 ## Key design decisions
 
 **Double-entry ledger, invariants in the database.** Balances are sums over postings, never stored. Postings of a
