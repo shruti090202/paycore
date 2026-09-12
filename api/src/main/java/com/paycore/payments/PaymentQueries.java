@@ -9,10 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-/**
- * List queries with keyset (cursor) pagination. Because ids are time-ordered ULIDs, "everything older than
- * cursor" is a single indexed range scan — no OFFSET, so page 100 costs the same as page 1.
- */
+/** List queries with keyset (cursor) pagination. */
 @Repository
 public class PaymentQueries {
 

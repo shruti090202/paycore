@@ -2,14 +2,7 @@ package com.paycore.banksim;
 
 import java.util.concurrent.atomic.AtomicReference;
 
-/**
- * Runtime-adjustable simulator knobs (dashboard "simulator" panel). In-memory on purpose: it is demo
- * configuration, not business data, and resetting on restart is the safe default.
- * <p>
- * Random decline/timeout rates only apply to cards whose deterministic behaviour is APPROVE, so the documented
- * test cards always behave as documented. {@code settlementAnomalyRate} corrupts a fraction of settlement rows
- * (amount off by one, dropped, duplicated) so reconciliation has something to find in demos.
- */
+/** Runtime-adjustable simulator knobs (dashboard "simulator" panel). */
 public class BankSimConfig {
 
     public record Settings(double randomDeclineRate, double randomTimeoutRate, int minLatencyMs, int maxLatencyMs,

@@ -9,23 +9,12 @@ import org.springframework.data.redis.core.script.RedisScript;
 import java.time.Clock;
 import java.util.List;
 
-/**
- * Token bucket in Redis, evaluated by ONE Lua script so read-refill-consume-write is atomic: two requests
- * arriving at the same millisecond cannot both take the last token. One round-trip per request
- * (EVALSHA; Spring falls back to EVAL when the script is not cached).
- * <p>
- * Time comes from the caller (this JVM), not from Redis, so a test can drive the clock and so behaviour is
- * identical across Redis versions that expose different time commands inside scripts.
- * <p>
- * Fail-open: if Redis is unreachable the request is allowed and flagged degraded. Rate limiting protects
- * capacity; it must never turn a Redis outage into a payments outage.
- */
+/** Token bucket in Redis, evaluated by ONE Lua script so read-refill-consume-write is atomic: two requests arriving at the same millisecond cannot both. */
 public class TokenBucketRateLimiter {
 
     private static final Logger log = LoggerFactory.getLogger(TokenBucketRateLimiter.class);
 
-    // KEYS[1] bucket key; ARGV: capacity, refill_per_second, now_ms, requested
-    // returns: {allowed(1|0), remaining_tokens(int), retry_after_ms, reset_ms}
+    // KEYS[1] bucket key; ARGV: capacity, refill_per_second, now_ms, requested returns: {allowed(1|0), remaining_tokens(int), retry_after_ms, reset_ms}
     private static final String LUA = """
             local key = KEYS[1]
             local capacity = tonumber(ARGV[1])

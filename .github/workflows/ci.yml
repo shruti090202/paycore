@@ -26,7 +26,6 @@ jobs:
           cache: maven
           cache-dependency-path: api/pom.xml
 
-      # Unit tests (surefire) + integration tests with Testcontainers (failsafe). Docker is available on ubuntu runners.
       - name: Build and test
         run: ./mvnw -B --no-transfer-progress verify
 

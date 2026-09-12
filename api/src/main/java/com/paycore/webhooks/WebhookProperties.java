@@ -2,10 +2,7 @@ package com.paycore.webhooks;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
-/**
- * Delivery tuning. Defaults: 8 attempts over ~1 hour of exponential backoff (10s, 20s, 40s, ... capped at
- * 15 min, with full jitter), 10s HTTP timeout, 60s lease while a dispatcher holds a delivery.
- */
+/** Delivery tuning. */
 @ConfigurationProperties(prefix = "paycore.webhooks")
 public record WebhookProperties(
         int maxAttempts,

@@ -12,11 +12,7 @@ import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * The bank's end-of-day settlement report: every approved transaction it has not reported yet, as CSV.
- * Marks rows {@code settled_on} so each transaction is reported once — unless the demo anomaly rate is set,
- * in which case a few rows are altered, dropped or duplicated so reconciliation has something to find.
- */
+/** The bank's end-of-day settlement report: every approved transaction it has not reported yet, as CSV. */
 @Component
 public class SettlementGenerator {
 

@@ -21,12 +21,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Refunds use the same two-transaction shape as checkout, with one addition: the amount is RESERVED in T1.
- * Under the payment's row lock, {@code refundable = captured - refunded - sum(pending refunds)}; the new refund
- * is inserted as {@code pending} before the bank is asked. Two hundred concurrent refund calls therefore
- * serialize on the lock and can never reserve more than was captured — see {@code RefundConcurrencyIT}.
- */
+/** Refunds use the same two-transaction shape as checkout, with one addition: the amount is RESERVED in T1. */
 @Service
 public class RefundService {
 
@@ -57,7 +52,7 @@ public class RefundService {
     }
 
     public Refund create(String merchantId, String paymentId, Long amountMinor, String reason) {
-        // T1: reserve ------------------------------------------------------------------------------------
+        // T1: reserve
         record Prepared(Refund refund, String attemptId, String parentBankRef) {
         }
         Prepared prep = tx.execute(status -> {
@@ -94,7 +89,7 @@ public class RefundService {
             return new Prepared(r, attempt.id(), p.getBankRef());
         });
 
-        // Bank call ----------------------------------------------------------------------------------------
+        // Bank call
         Refund r = prep.refund();
         Instant started = clock.instant();
         BankGateway.BankResponse response;
@@ -116,7 +111,7 @@ public class RefundService {
         }
         int latency = (int) Duration.between(started, clock.instant()).toMillis();
 
-        // T2: apply ----------------------------------------------------------------------------------------
+        // T2: apply
         return tx.execute(status -> {
             attempts.recordOutcome(prep.attemptId(), response.approved() ? BankAttempt.APPROVED : BankAttempt.DECLINED,
                     response.declineCode(), latency);
@@ -124,10 +119,7 @@ public class RefundService {
         });
     }
 
-    /**
-     * Finalizes a pending refund. Idempotent: a refund that is no longer pending is returned unchanged, so the
-     * resolution job and a late bank answer cannot double-apply.
-     */
+    /** Finalizes a pending refund. */
     @Transactional
     public Refund applyOutcome(String refundId, boolean approved, String declineCode) {
         Refund r = refunds.findById(refundId).orElseThrow(() -> PayCoreException.notFound("refund", refundId));

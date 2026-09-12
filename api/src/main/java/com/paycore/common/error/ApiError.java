@@ -2,10 +2,7 @@ package com.paycore.common.error;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
-/**
- * The one error envelope every endpoint returns:
- * <pre>{"error":{"type":"invalid_request","code":"amount_exceeds_captured","message":"...","param":"amount","request_id":"req_..."}}</pre>
- */
+/** The one error envelope every endpoint returns. */
 public record ApiError(Body error) {
 
     @JsonInclude(JsonInclude.Include.NON_NULL)

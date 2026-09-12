@@ -2,12 +2,7 @@ package com.paycore.common.money;
 
 import java.math.BigDecimal;
 
-/**
- * An amount in minor units (paise, cents) with its ISO currency. Integer arithmetic only.
- * <p>
- * Mixed-currency arithmetic throws: there is no exchange rate inside a ledger, so adding INR to USD is a bug,
- * not a rounding question. Percent fees use half-up rounding on the integer product to avoid any floating point.
- */
+/** An amount in minor units (paise, cents) with its ISO currency. */
 public record Money(long minor, String currency) implements Comparable<Money> {
 
     public Money {

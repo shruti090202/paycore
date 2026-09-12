@@ -21,10 +21,7 @@ public class LedgerRepository {
                 .param("code", code).query(LedgerAccount.class).optional();
     }
 
-    /**
-     * Insert-if-absent, then read. Two concurrent callers creating the same account race on the unique index;
-     * ON CONFLICT DO NOTHING makes the loser simply read the winner's row.
-     */
+    /** Insert-if-absent, then read. */
     public LedgerAccount ensureAccount(String id, String code, AccountType type, String currency, String merchantId,
                                        java.time.Instant now) {
         jdbc.sql("""

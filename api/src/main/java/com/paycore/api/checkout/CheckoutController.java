@@ -29,10 +29,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.time.Instant;
 import java.util.List;
 
-/**
- * Hosted checkout, driven by the session token in the URL (no merchant credential ever reaches the browser).
- * The only endpoint in PayCore that receives card data — and it accepts test cards only.
- */
+/** Hosted checkout, driven by the session token in the URL (no merchant credential ever reaches the browser). */
 @RestController
 @RequestMapping("/checkout/sessions")
 @Tag(name = "Checkout (hosted page)")

@@ -2,13 +2,7 @@ package com.paycore.common.id;
 
 import com.github.f4b6a3.ulid.UlidCreator;
 
-/**
- * Prefixed, time-sortable identifiers (Stripe-style): {@code pay_01j9x...}.
- * <p>
- * ULIDs over UUIDv4 because they sort by creation time, which keeps B-tree inserts
- * append-only (better locality than random UUIDs) and makes cursor pagination trivial.
- * The prefix makes ids self-describing in logs and support tickets.
- */
+/** Prefixed, time-sortable identifiers (Stripe-style): pay_01j9x.... */
 public final class Ids {
 
     public static final String MERCHANT = "mer";

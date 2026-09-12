@@ -11,11 +11,7 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.util.Optional;
 
-/**
- * Persistence for idempotency keys. Every method runs in its own short transaction (REQUIRES_NEW) because the
- * filter that uses it sits outside any controller transaction, and the claim must be visible to other
- * requests immediately.
- */
+/** Persistence for idempotency keys. */
 @Repository
 public class IdempotencyStore {
 

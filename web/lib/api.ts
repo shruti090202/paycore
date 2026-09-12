@@ -1,6 +1,4 @@
-// Browser-side client for the PayCore API. Dashboard calls carry the JWT from localStorage; checkout calls are
-// unauthenticated (the session token in the URL is the credential). Server-side code (demo store) uses
-// lib/server-api.ts instead, which holds the secret key.
+// Browser-side client for the PayCore API.
 export const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8080";
 
 const TOKEN_KEY = "paycore_token";

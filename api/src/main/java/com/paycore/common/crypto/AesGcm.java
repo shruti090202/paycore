@@ -10,11 +10,7 @@ import java.security.MessageDigest;
 import java.security.SecureRandom;
 import java.util.Base64;
 
-/**
- * AES-256-GCM for secrets we must be able to read back (webhook signing secrets). Layout: 12-byte random
- * nonce || ciphertext+tag. GCM gives confidentiality AND integrity, so a tampered row fails to decrypt
- * rather than yielding garbage.
- */
+/** AES-256-GCM for secrets we must be able to read back (webhook signing secrets). */
 public final class AesGcm {
 
     private static final int NONCE_BYTES = 12;

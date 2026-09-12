@@ -7,10 +7,7 @@ import java.time.Clock;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * Which limit applies to a merchant: its own override or the platform default. Cached in memory for a minute so
- * authenticating a request does not add a merchant lookup on the hot path.
- */
+/** Which limit applies to a merchant: its own override or the platform default. */
 @Component
 public class RateLimitPolicy {
 

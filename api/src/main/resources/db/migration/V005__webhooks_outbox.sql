@@ -1,7 +1,4 @@
 -- Webhooks via a transactional outbox.
---   outbox_events        written in the SAME transaction as the state change it describes (never lost)
---   webhook_deliveries   one row per (event, endpoint), claimed by dispatchers with FOR UPDATE SKIP LOCKED
---   webhook_delivery_attempts   append-only log of every HTTP attempt (shown in the dashboard)
 
 CREATE TABLE webhook_endpoints (
     id             TEXT PRIMARY KEY,

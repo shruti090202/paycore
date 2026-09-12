@@ -10,10 +10,7 @@ import tools.jackson.databind.ObjectMapper;
 import java.util.Map;
 import java.util.UUID;
 
-/**
- * Tiny HTTP helper for integration tests: plain {@link RestClient}, never throws on 4xx/5xx,
- * returns parsed JSON so assertions read like the API docs.
- */
+/** Tiny HTTP helper for integration tests: plain RestClient, never throws on 4xx/5xx, returns parsed JSON so assertions read like the API docs. */
 public class Api {
 
     private static final ObjectMapper JSON = new ObjectMapper();

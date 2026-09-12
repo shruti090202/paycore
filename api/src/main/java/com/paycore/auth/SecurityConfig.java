@@ -25,16 +25,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 
-/**
- * Three stateless filter chains, one per audience:
- * <ul>
- *   <li>{@code /v1/**}        merchant API, API key (sk_test_...)</li>
- *   <li>{@code /dashboard/**} merchant dashboard, JWT (except {@code /dashboard/auth/**})</li>
- *   <li>everything else:      public (checkout, health, docs) or internal-token ({@code /internal/**})</li>
- * </ul>
- * Separate chains keep each credential type from being accepted where it doesn't belong: an API key
- * can never drive the dashboard and a dashboard JWT can never call the merchant API.
- */
+/** Three stateless filter chains, one per audience: /v1/** merchant API, API key (sk_test_...) /dashboard/** merchant dashboard, JWT (except. */
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {

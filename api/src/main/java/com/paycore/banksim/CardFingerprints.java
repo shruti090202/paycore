@@ -10,10 +10,7 @@ import java.security.GeneralSecurityException;
 import java.util.Base64;
 import java.util.HexFormat;
 
-/**
- * A keyed fingerprint of a card number: stable per card (so velocity and blocklist rules can recognise a card
- * across payments) but useless to an attacker without the server key. The PAN itself is never persisted.
- */
+/** A keyed fingerprint of a card number: stable per card (so velocity and blocklist rules can recognise a card across payments) but useless to an. */
 @Component
 public class CardFingerprints {
 

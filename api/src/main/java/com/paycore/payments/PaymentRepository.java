@@ -12,10 +12,7 @@ public interface PaymentRepository extends CrudRepository<Payment, String> {
 
     Optional<Payment> findByCheckoutToken(String checkoutToken);
 
-    /**
-     * Row lock for every state change. Concurrent captures/refunds/cancels on one payment serialize here,
-     * so the "read counters, validate, write counters" sequence is atomic per payment.
-     */
+    /** Row lock for every state change. */
     @Query("SELECT * FROM payments WHERE id = :id AND merchant_id = :merchantId FOR UPDATE")
     Optional<Payment> lockByIdAndMerchantId(@Param("id") String id, @Param("merchantId") String merchantId);
 

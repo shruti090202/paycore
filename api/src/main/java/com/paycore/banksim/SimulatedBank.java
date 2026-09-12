@@ -10,15 +10,7 @@ import java.security.SecureRandom;
 import java.time.Clock;
 import java.util.Optional;
 
-/**
- * An in-process acquiring bank. It has its own books ({@code banksim_transactions}) written in their OWN
- * transaction (REQUIRES_NEW), so from the gateway's point of view the bank's record survives even when the
- * gateway's transaction rolls back or the "network" times out — exactly like a real bank.
- * <p>
- * Behaviour is driven by the test card (deterministic) plus optional random decline/timeout rates for demos.
- * A timeout is simulated by recording the outcome and then throwing {@link BankTimeoutException}: the money
- * "moved" at the bank, but the gateway never heard.
- */
+/** An in-process acquiring bank. */
 @Component
 public class SimulatedBank implements BankGateway {
 
@@ -137,8 +129,7 @@ public class SimulatedBank implements BankGateway {
                 .map(t -> new BankTransactionStatus(t.bankRef(), Outcome.valueOf(t.outcome().toUpperCase()), t.declineCode()));
     }
 
-    // ---- internals ------------------------------------------------------------------------------------------
-
+    // internals
     private void record(String bankRef, String kind, String parentRef, long amount, String currency, String fp,
                         String last4, Outcome outcome, String declineCode, String authCode) {
         try {

@@ -1,9 +1,6 @@
--- Payments (state machine) + double-entry ledger.
--- Invariants are enforced HERE, not only in Java: a bug, a bypass, or a manual UPDATE cannot corrupt money.
+-- payments (state machine) + double-entry ledger.
 
--- ============================================================================================
--- Payments
--- ============================================================================================
+-- ============================================================================================ Payments.
 CREATE TABLE payments (
     id               TEXT PRIMARY KEY,
     merchant_id      TEXT        NOT NULL REFERENCES merchants (id),
@@ -57,8 +54,7 @@ CREATE INDEX payments_merchant_created_idx ON payments (merchant_id, id DESC);
 CREATE INDEX payments_merchant_status_idx  ON payments (merchant_id, status, id DESC);
 CREATE INDEX payments_status_pending_idx   ON payments (status) WHERE status = 'pending_bank';
 
--- Allowed transitions as DATA. The trigger below is generic; this table is the single source of truth
--- on the database side, and a test asserts it matches the Java enum.
+-- Allowed transitions as DATA.
 CREATE TABLE payment_status_transitions (
     from_status TEXT NOT NULL,
     to_status   TEXT NOT NULL,
@@ -114,9 +110,7 @@ CREATE TABLE payment_events (
 );
 CREATE INDEX payment_events_payment_idx ON payment_events (payment_id, id);
 
--- ============================================================================================
--- Ledger
--- ============================================================================================
+-- ============================================================================================ Ledger.
 CREATE TABLE ledger_accounts (
     id          TEXT PRIMARY KEY,
     code        TEXT        NOT NULL,                 -- e.g. bank_receivable:INR, merchant_payable:mer_x:INR
@@ -157,8 +151,6 @@ CREATE INDEX postings_entry_idx   ON postings (journal_entry_id);
 CREATE INDEX postings_account_idx ON postings (account_id);
 
 -- Invariant 1: every journal entry balances (sum of debits == sum of credits), has >= 2 postings, one currency.
--- A DEFERRABLE INITIALLY DEFERRED constraint trigger runs at COMMIT, so postings can be inserted one row at a
--- time inside a transaction, but an unbalanced entry can never become visible.
 CREATE OR REPLACE FUNCTION ledger_assert_entry_balanced() RETURNS trigger AS $$
 DECLARE
     v_entry_id  TEXT;
@@ -237,8 +229,7 @@ CREATE TRIGGER postings_append_only        BEFORE UPDATE OR DELETE ON postings
 CREATE TRIGGER payment_events_append_only  BEFORE UPDATE OR DELETE ON payment_events
     FOR EACH ROW EXECUTE FUNCTION ledger_reject_mutation();
 
--- Balances are DERIVED. Assets/expenses carry a natural debit balance, liabilities/revenue a credit balance,
--- so "balance_minor" is positive in the account's natural direction.
+-- Balances are DERIVED.
 CREATE VIEW account_balances AS
 SELECT a.id          AS account_id,
        a.code,

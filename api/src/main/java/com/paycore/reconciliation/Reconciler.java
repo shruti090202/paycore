@@ -21,21 +21,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-/**
- * Matches a settlement file (the bank's claim) against our books (bank_attempts + payments + refunds) and
- * records every discrepancy as an item for a human. Only rows that match exactly are booked to the ledger:
- * <pre>
- *   DR settlement_cash / CR bank_receivable   (net of matched refunds)
- * </pre>
- * Unmatched money stays on the exceptions queue rather than being guessed into the books — that is the whole
- * point of reconciliation.
- * <pre>
- *   missing_in_ledger  bank reported something we never asked for / never captured
- *   amount_mismatch    bank amount != our amount (attempt or captured)
- *   duplicate          the same bank_ref appears twice in the file
- *   missing_in_bank    we have an approved call the bank never reported
- * </pre>
- */
+/** Matches a settlement file (the bank's claim) against our books (bank_attempts + payments + refunds) and records every discrepancy as an item for a. */
 @Service
 public class Reconciler {
 

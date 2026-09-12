@@ -8,11 +8,7 @@ import org.springframework.data.relational.core.mapping.Table;
 
 import java.time.Instant;
 
-/**
- * The payment aggregate. Mutable on purpose (unlike ledger rows): its status and money counters change over
- * its life. All changes go through {@link PaymentService}, which locks the row and validates transitions.
- * {@code version} gives optimistic locking as a second line of defence behind {@code SELECT ... FOR UPDATE}.
- */
+/** The payment aggregate. */
 @Table("payments")
 public class Payment {
 
@@ -48,8 +44,7 @@ public class Payment {
     Payment() {
     }
 
-    // ---- derived helpers -------------------------------------------------------------------------------
-
+    // derived helpers
     public PaymentStatus paymentStatus() {
         return PaymentStatus.fromWire(status);
     }
@@ -84,8 +79,7 @@ public class Payment {
         this.updatedAt = now;
     }
 
-    // ---- accessors ---------------------------------------------------------------------------------------
-
+    // accessors
     public String getId() { return id; }
     public String getMerchantId() { return merchantId; }
     public long getAmountMinor() { return amountMinor; }

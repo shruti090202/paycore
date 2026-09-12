@@ -8,17 +8,7 @@ import com.tngtech.archunit.lang.ArchRule;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 import static com.tngtech.archunit.library.dependencies.SlicesRuleDefinition.slices;
 
-/**
- * The modular-monolith contract, enforced at build time.
- * <p>
- * Packages directly under {@code com.paycore} are modules. Rules:
- * <ol>
- *   <li>Modules never depend on {@code api} (controllers are the outermost layer).</li>
- *   <li>{@code common} depends on no other module.</li>
- *   <li>No dependency cycles between modules — the single most useful rule: it forces every
- *       cross-module call to go one direction and makes extraction into a service mechanical.</li>
- * </ol>
- */
+/** The modular-monolith contract, enforced at build time. */
 @AnalyzeClasses(packages = "com.paycore", importOptions = ImportOption.DoNotIncludeTests.class)
 class ArchitectureTest {
 

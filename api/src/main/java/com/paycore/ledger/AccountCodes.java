@@ -1,14 +1,6 @@
 package com.paycore.ledger;
 
-/**
- * Chart of accounts. Codes are currency-suffixed because a ledger account holds exactly one currency.
- * <pre>
- *  bank_receivable:INR          asset      what the acquiring bank owes us for captured card payments
- *  settlement_cash:INR          asset      money the bank has actually settled to our account
- *  fee_revenue:INR              revenue    our gateway fees
- *  merchant_payable:mer_x:INR   liability  what we owe merchant x (their "balance")
- * </pre>
- */
+/** Chart of accounts. */
 public final class AccountCodes {
 
     private AccountCodes() {

@@ -18,10 +18,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-/**
- * Attacks the ledger with raw SQL. Every test here bypasses the Java services on purpose:
- * the point is that Postgres itself refuses to store a broken ledger.
- */
+/** Attacks the ledger with raw SQL. */
 class LedgerInvariantsIT extends AbstractIntegrationTest {
 
     @Autowired JdbcClient jdbc;

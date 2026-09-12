@@ -1,6 +1,4 @@
-// Verifies a PayCore webhook signature. Mirror of the server's WebhookSignatures.verify:
-//   PayCore-Signature: t=<unix seconds>,v1=<hex HMAC-SHA256(secret, "<t>.<raw body>")>
-// Verify the RAW body bytes before parsing JSON; any re-serialization would break the MAC (by design).
+// Verifies a PayCore webhook signature.
 import { createHmac, timingSafeEqual } from "node:crypto";
 
 export function verifyPayCoreSignature(secret: string, header: string | null, rawBody: string, nowSeconds = Math.floor(Date.now() / 1000), toleranceSeconds = 300): boolean {

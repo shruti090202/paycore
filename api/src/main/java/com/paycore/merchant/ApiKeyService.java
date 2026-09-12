@@ -17,14 +17,7 @@ import java.util.HexFormat;
 import java.util.List;
 import java.util.Optional;
 
-/**
- * API keys are {@code sk_test_} + 32 base62 chars (~190 bits of entropy) and stored as SHA-256 hashes.
- * <p>
- * Why SHA-256 and not bcrypt: bcrypt exists to slow down guessing of low-entropy passwords. A random
- * 190-bit key cannot be guessed, so slow hashing buys nothing and would cost ~60 ms of CPU on every
- * API call. A fast hash + unique index gives an O(1) lookup and still means a leaked database does
- * not leak usable keys.
- */
+/** API keys are sk_test_ + 32 base62 chars (~190 bits of entropy) and stored as SHA-256 hashes. */
 @Service
 public class ApiKeyService {
 

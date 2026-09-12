@@ -1,9 +1,6 @@
 -- Bank interaction (gateway side + simulator side), refunds, and job bookkeeping.
 
--- ============================================================================================
--- Gateway side: every call we make to the bank, keyed by a reference WE generate before calling.
--- If the call times out (or the process dies mid-call) the reference lets us ask the bank later.
--- ============================================================================================
+-- ============================================================================================ Gateway side: every call we make to the bank, keyed by a.
 CREATE TABLE bank_attempts (
     id            TEXT PRIMARY KEY,
     payment_id    TEXT        NOT NULL REFERENCES payments (id),
@@ -24,9 +21,7 @@ CREATE TABLE bank_attempts (
 );
 CREATE INDEX bank_attempts_payment_idx ON bank_attempts (payment_id, id);
 
--- ============================================================================================
--- Refunds
--- ============================================================================================
+-- ============================================================================================ Refunds.
 CREATE TABLE refunds (
     id            TEXT PRIMARY KEY,
     payment_id    TEXT        NOT NULL REFERENCES payments (id),
@@ -62,10 +57,7 @@ $$ LANGUAGE plpgsql;
 CREATE TRIGGER refunds_transition_guard BEFORE UPDATE ON refunds
     FOR EACH ROW EXECUTE FUNCTION refunds_enforce_transition();
 
--- ============================================================================================
--- Simulator side: "the bank's books". Deliberately a separate table with its own keys so that
--- reconciliation compares two independent records rather than one table with itself.
--- ============================================================================================
+-- ============================================================================================ Simulator side: "the bank's books".
 CREATE TABLE banksim_transactions (
     bank_ref         TEXT PRIMARY KEY,                      -- the gateway's reference (acts as the bank's idempotency key)
     kind             TEXT        NOT NULL,                  -- authorize | refund
@@ -84,9 +76,7 @@ CREATE TABLE banksim_transactions (
 );
 CREATE INDEX banksim_transactions_settle_idx ON banksim_transactions (settled_on, created_at);
 
--- ============================================================================================
--- Background jobs: one row per run, and at most one 'running' row per job name.
--- ============================================================================================
+-- ============================================================================================ Background jobs: one row per run, and at most one.
 CREATE TABLE job_runs (
     id          TEXT PRIMARY KEY,
     job_name    TEXT        NOT NULL,

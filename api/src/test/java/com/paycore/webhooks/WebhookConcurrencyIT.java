@@ -19,10 +19,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * Several dispatchers running at once (cron job + scheduler, or two Render instances) must not deliver the
- * same event twice. SKIP LOCKED partitions the claims; the lease hides claimed rows while the HTTP call runs.
- */
+/** Several dispatchers running at once (cron job + scheduler, or two Render instances) must not deliver the same event twice. */
 class WebhookConcurrencyIT extends AbstractIntegrationTest {
 
     @Autowired WebhookDispatcher dispatcher;

@@ -18,18 +18,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * The consumer side of the outbox. One pass = fan-out + deliver:
- * <ol>
- *   <li>Fan-out: claim events with no deliveries ({@code FOR UPDATE SKIP LOCKED}), create one pending delivery
- *       per subscribed active endpoint, mark the event fanned out. One transaction per event.</li>
- *   <li>Deliver: claim due deliveries (SKIP LOCKED + lease), COMMIT, then POST each one with no transaction
- *       open, then record the outcome. Success -> delivered; failure -> retry with jittered backoff; too many
- *       failures -> dead (manual replay from the dashboard).</li>
- * </ol>
- * Several dispatchers (cron-triggered job + in-process scheduler, or two instances) can run at once without
- * double delivery: SKIP LOCKED partitions the claims and the lease hides claimed rows until it expires.
- */
+/** The consumer side of the outbox. */
 @Service
 public class WebhookDispatcher {
 
@@ -58,8 +47,7 @@ public class WebhookDispatcher {
         this.clock = clock;
         var factory = new org.springframework.http.client.JdkClientHttpRequestFactory(
                 java.net.http.HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(3))
-                        // HTTP/1.1 only: the JDK default (HTTP/2 with h2c upgrade on plain http) is dropped by some
-                        // receivers (e.g. Node servers), and webhook consumers are arbitrary third-party servers.
+                        // HTTP/1.1 only: the JDK default (HTTP/2 with h2c upgrade on plain http) is dropped by some receivers (e.g.
                         .version(java.net.http.HttpClient.Version.HTTP_1_1)
                         .followRedirects(java.net.http.HttpClient.Redirect.NEVER).build());
         factory.setReadTimeout(Duration.ofSeconds(props.httpTimeoutSeconds()));
@@ -72,7 +60,7 @@ public class WebhookDispatcher {
     public Summary dispatchOnce() {
         Instant now = clock.instant();
         int fanned = 0, created = 0;
-        // ---- fan-out ---------------------------------------------------------------------------------------
+        // fan-out
         while (true) {
             int[] counts = tx.execute(s -> {
                 List<OutboxEvent> events = repo.claimUnfannedEvents(props.batchSize());
@@ -88,7 +76,7 @@ public class WebhookDispatcher {
                 break;
             }
         }
-        // ---- deliver ---------------------------------------------------------------------------------------
+        // deliver
         List<WebhookDelivery> claimed = tx.execute(s -> repo.claimDue(now, Duration.ofSeconds(props.leaseSeconds()), props.batchSize()));
         int delivered = 0, retried = 0, dead = 0;
         for (WebhookDelivery d : claimed) {

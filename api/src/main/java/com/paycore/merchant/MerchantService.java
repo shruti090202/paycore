@@ -54,10 +54,7 @@ public class MerchantService {
         }
     }
 
-    /**
-     * Same error for "no such email" and "wrong password", and the password check runs even when the
-     * email is unknown, so timing does not reveal which emails are registered.
-     */
+    /** Same error for "no such email" and "wrong password", and the password check runs even when the email is unknown, so timing does not reveal which. */
     @Transactional(readOnly = true)
     public Merchant authenticate(String email, String rawPassword) {
         Merchant merchant = merchants.findByEmail(email.trim().toLowerCase(Locale.ROOT)).orElse(null);

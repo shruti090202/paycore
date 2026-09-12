@@ -5,10 +5,7 @@ import org.springframework.data.relational.core.mapping.Table;
 
 import java.time.Instant;
 
-/**
- * A refund request. Inserted as {@code pending} while the bank is asked; the amount is reserved against the
- * payment's refundable balance from that moment, so concurrent refunds cannot exceed what was captured.
- */
+/** A refund request. */
 @Table("refunds")
 public record Refund(
         @Id String id,

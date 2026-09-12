@@ -1,5 +1,4 @@
--- Idempotency keys: one row per (merchant, key). The PRIMARY KEY is the whole concurrency story:
--- the first request to INSERT wins; everyone else sees the row and either replays, conflicts, or waits.
+-- Idempotency keys: one row per (merchant, key).
 CREATE TABLE idempotency_keys (
     merchant_id           TEXT        NOT NULL REFERENCES merchants (id),
     idem_key              TEXT        NOT NULL,

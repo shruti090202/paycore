@@ -9,11 +9,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 
-/**
- * Sliding-window-ish counters in Redis, one Lua call each (Upstash bills per command). Keys expire with the
- * window, so Redis holds only recent activity. Returns null when Redis is unreachable: the caller decides what
- * "unknown" means (the rules add a small penalty and say why).
- */
+/** Sliding-window-ish counters in Redis, one Lua call each (Upstash bills per command). */
 @Component
 public class VelocityCounters {
 
@@ -39,8 +35,7 @@ public class VelocityCounters {
         this.redis = redis;
     }
 
-    /** Attempts with this card at this merchant in the window (including this one), or null if unavailable.
-     *  Scoped per merchant: each merchant tunes its own thresholds; a platform-wide signal would be a separate rule. */
+    /** Attempts with this card at this merchant in the window (including this one), or null if unavailable. */
     public Long incrementCardAttempts(String merchantId, String cardFingerprint, long windowSeconds) {
         try {
             return redis.execute(INCR_WITH_TTL, List.of("risk:card:" + merchantId + ":" + cardFingerprint), String.valueOf(windowSeconds));

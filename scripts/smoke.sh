@@ -1,10 +1,5 @@
 #!/usr/bin/env bash
-# Smoke test against a running PayCore API (local or live). Needs only the API URL: it logs in as the demo
-# merchant, creates a throwaway API key, runs a payment through the hosted-checkout API with a test card,
-# refunds part of it, checks the ledger and events, then revokes the key.
-#
-#   scripts/smoke.sh https://paycore-api.onrender.com
-#   scripts/smoke.sh http://localhost:8080
+# Smoke test against a running PayCore API: scripts/smoke.sh https://paycore-api-gbvz.onrender.com
 set -euo pipefail
 API="${1:-http://localhost:8080}"
 J='Content-Type: application/json'

@@ -8,16 +8,7 @@ import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.PostgreSQLContainer;
 
-/**
- * Boots the whole app on a random port against a real Postgres (Testcontainers).
- * <p>
- * The container is started once per JVM and shared by every IT class: Spring caches the context, so
- * the suite pays the container + Flyway cost once. Tests must therefore create their own merchants
- * rather than assume an empty database.
- * <p>
- * We inject the container's coordinates as the same environment variable names production uses
- * ({@code DATABASE_URL} etc.), so application.yml is exercised exactly as in production.
- */
+/** Boots the whole app on a random port against a real Postgres (Testcontainers). */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("test")
 public abstract class AbstractIntegrationTest {

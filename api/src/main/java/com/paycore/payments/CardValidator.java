@@ -9,11 +9,7 @@ import java.time.Clock;
 import java.time.YearMonth;
 import java.time.ZoneOffset;
 
-/**
- * Gatekeeper for card input. Order matters: format and Luhn first (cheap, no information leak), then the
- * test-card allowlist. A real-looking PAN that is not a documented test card is rejected here and never
- * reaches the simulator, storage, or logs.
- */
+/** Gatekeeper for card input. */
 public final class CardValidator {
 
     private CardValidator() {

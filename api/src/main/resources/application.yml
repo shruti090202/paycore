@@ -3,24 +3,23 @@ spring:
     name: paycore
   threads:
     virtual:
-      enabled: true            # Java 21 virtual threads: blocking JDBC/Redis calls don't pin a platform thread
+      enabled: true
   datasource:
-    # Either a JDBC URL + DATABASE_USER/DATABASE_PASSWORD, or a plain postgres:// URI (parsed by
-    # DatabaseUrlEnvironmentPostProcessor); the latter is what Neon/Render/Supabase hand out.
+    # JDBC URL + user/password, or a postgres:// URI (parsed by DatabaseUrlEnvironmentPostProcessor).
     url: ${DATABASE_URL}
     username: ${DATABASE_USER:}
     password: ${DATABASE_PASSWORD:}
     hikari:
-      # Sized for Render free (512 MB / 0.1 CPU) + Neon free (compute must be allowed to suspend).
+      # Sized for Render free + Neon free (idle 0 so Neon can suspend).
       maximum-pool-size: ${DB_POOL_MAX:4}
-      minimum-idle: 0          # no idle connections -> Neon can auto-suspend -> stays inside 100 CU-h/month
+      minimum-idle: 0
       idle-timeout: 60000
-      max-lifetime: 300000     # PgBouncer/Neon may recycle server connections; keep ours short
+      max-lifetime: 300000
       connection-timeout: 15000
-      keepalive-time: 0        # never keep Neon awake artificially
+      keepalive-time: 0
       pool-name: paycore
   flyway:
-    url: ${FLYWAY_URL:${DATABASE_URL}}   # Neon: DIRECT host for migrations (DATABASE_DIRECT_URL); app traffic goes through the pooler
+    url: ${FLYWAY_URL:${DATABASE_URL}}   # direct (non-pooled) host for migrations
     user: ${DATABASE_USER:}
     password: ${DATABASE_PASSWORD:}
     locations: classpath:db/migration
@@ -35,7 +34,7 @@ spring:
     default-property-inclusion: non_null
   mvc:
     problemdetails:
-      enabled: false           # we own the error envelope (see GlobalExceptionHandler)
+      enabled: false
 
 server:
   port: ${PORT:8080}
@@ -62,8 +61,7 @@ management:
       probes:
         enabled: true
   health:
-    # Liveness only. Health checks must NOT touch Postgres or Redis:
-    # every ping would wake Neon compute (CU-hours) and spend Upstash commands.
+    # Liveness only: health must not touch Postgres or Redis (free-tier budgets).
     db:
       enabled: false
     redis:
@@ -88,15 +86,15 @@ paycore:
     lease-seconds: 60
     http-timeout-seconds: 10
     batch-size: 25
-    allow-private-urls: ${WEBHOOK_ALLOW_PRIVATE_URLS:false}   # true only for local/dev (tests post to localhost)
+    allow-private-urls: ${WEBHOOK_ALLOW_PRIVATE_URLS:false}
   scheduler:
     enabled: ${SCHEDULER_ENABLED:true}
     interval-ms: 5000
-    active-window-seconds: 600      # after activity, poll for 10 min then let Neon sleep
+    active-window-seconds: 600
   ratelimit:
     enabled: ${RATE_LIMIT_ENABLED:true}
-    capacity: ${RATE_LIMIT_CAPACITY:60}            # burst
-    refill-per-second: ${RATE_LIMIT_REFILL_PER_SECOND:1}   # sustained: 60/min
+    capacity: ${RATE_LIMIT_CAPACITY:60}
+    refill-per-second: ${RATE_LIMIT_REFILL_PER_SECOND:1}
   jwt:
     secret: ${JWT_SECRET}
     ttl-minutes: ${JWT_TTL_MINUTES:30}
@@ -112,7 +110,7 @@ paycore:
 
 sentry:
   dsn: ${SENTRY_DSN:}
-  traces-sample-rate: 0.0      # free tier: errors only
+  traces-sample-rate: 0.0
   send-default-pii: false
 
 logging:
@@ -141,4 +139,4 @@ spring:
 logging:
   structured:
     format:
-      console: ecs             # JSON logs; MDC (request_id, merchant_id) is included automatically
+      console: ecs

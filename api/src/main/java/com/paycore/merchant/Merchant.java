@@ -6,10 +6,7 @@ import org.springframework.data.relational.core.mapping.Table;
 
 import java.time.Instant;
 
-/**
- * A merchant account. Immutable record: Spring Data JDBC creates a fresh copy on update.
- * Fee schedule lives on the merchant so pricing is per-merchant data, not code.
- */
+/** A merchant account. */
 @Table("merchants")
 public record Merchant(
         @Id String id,

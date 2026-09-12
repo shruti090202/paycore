@@ -1,10 +1,6 @@
 package com.paycore.risk;
 
-/**
- * One signal. A rule returns how many points it adds and a human-readable reason (or nothing).
- * {@code unknown} means the rule could not evaluate (e.g. Redis down): the engine adds a small penalty
- * rather than silently allowing, and the reason says so.
- */
+/** One signal. */
 public interface RiskRule {
 
     String type();

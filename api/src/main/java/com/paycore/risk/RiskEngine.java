@@ -11,16 +11,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
-/**
- * Runs every enabled rule for a merchant, sums the points (capped at 100) and maps the total to a decision.
- * Rules are data (global defaults + per-merchant overrides, cached for a minute); the rule implementations are
- * code. Every fired rule leaves a human-readable reason that the dashboard shows verbatim, because "why was
- * my customer blocked?" is the first question a merchant asks.
- * <p>
- * A rule that cannot evaluate (Redis down) is "unknown": it adds {@value #UNKNOWN_PENALTY} points and its
- * reason says so. That is deliberately fail-closed-ish — an outage should make us slightly more suspicious,
- * never blind — while still not blocking normal checkouts on its own.
- */
+/** Runs every enabled rule for a merchant, sums the points (capped at 100) and maps the total to a decision. */
 @Service
 public class RiskEngine {
 

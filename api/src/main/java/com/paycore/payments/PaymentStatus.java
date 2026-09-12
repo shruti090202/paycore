@@ -4,21 +4,7 @@ import java.util.EnumSet;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * The payment state machine.
- * <pre>
- *  created ──► pending_bank ──► authorized ──► captured ──► partially_refunded ──► refunded
- *     │              │              │   │                         │
- *     ├──► authorized│              │   └──► canceled (void)      └──► partially_refunded (again)
- *     ├──► failed ◄──┘◄─────────────┘
- *     └──► canceled
- * </pre>
- * {@code pending_bank} is the "we asked the bank and never heard back" state: money may or may not have moved,
- * so nothing is allowed from it except the outcome the bank eventually reports.
- * <p>
- * The same edges live in the {@code payment_status_transitions} table and are enforced by a trigger;
- * {@code PaymentStateMachineIT} asserts the two stay identical.
- */
+/** The payment state machine. */
 public enum PaymentStatus {
     CREATED,
     PENDING_BANK,

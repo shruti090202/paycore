@@ -13,10 +13,7 @@ import java.time.ZoneOffset;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-/**
- * Keeps the free-tier database (0.5 GB) from filling with operational rows. Money rows (payments, refunds,
- * ledger) are never touched. Batched deletes so a long-neglected table cannot lock everything for minutes.
- */
+/** Keeps the free-tier database (0.5 GB) from filling with operational rows. */
 @Component
 public class RetentionCleanupJob implements Job {
 

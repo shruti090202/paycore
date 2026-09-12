@@ -23,11 +23,8 @@
     <archunit.version>1.5.0</archunit.version>
     <ulid.version>5.2.4</ulid.version>
     <sentry.version>8.56.0</sentry.version>
-    <!-- Integration tests (Testcontainers) run in the failsafe phase; unit tests in surefire. -->
     <skipITs>false</skipITs>
-    <!-- Windows-only workaround: the JDK backs NIO pipes with AF_UNIX sockets in the temp dir, and some Windows
-         temp paths make that connect() fail ("Unable to establish loopback connection" from Tomcat).
-         Pointing the socket dir at target/ is harmless on Linux/CI. -->
+    <!-- Windows workaround for Tomcat "Unable to establish loopback connection"; harmless elsewhere. -->
     <unixdomain.tmpdir>${project.build.directory}</unixdomain.tmpdir>
   </properties>
 

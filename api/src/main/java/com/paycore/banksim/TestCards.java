@@ -4,11 +4,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-/**
- * The ONLY card numbers PayCore accepts. Each maps to a deterministic simulator behaviour so that flows can be
- * demonstrated and tested without randomness. Anything not on this list is rejected before it reaches the
- * simulator, and no PAN is ever stored or logged.
- */
+/** The ONLY card numbers PayCore accepts. */
 public final class TestCards {
 
     public enum Behaviour {

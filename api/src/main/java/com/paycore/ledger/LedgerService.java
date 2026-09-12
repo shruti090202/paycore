@@ -15,13 +15,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Double-entry ledger. Every money movement is a {@link JournalEntry} with {@link Posting}s that sum to zero.
- * <p>
- * The service checks balance in Java (fast feedback) and the database re-checks at commit (the guarantee).
- * Balances are never stored; they are sums over postings. This makes the ledger auditable by construction:
- * any balance can be re-derived, and history cannot be edited (append-only triggers).
- */
+/** Double-entry ledger. */
 @Service
 public class LedgerService {
 
@@ -54,16 +48,7 @@ public class LedgerService {
         }
     }
 
-    /**
-     * Records a capture: the bank now owes us the gross amount; we owe the merchant the net; the fee is ours.
-     * <pre>
-     *   DR bank_receivable      gross
-     *   CR merchant_payable     gross - fee
-     *   CR fee_revenue          fee
-     * </pre>
-     * Must run inside the caller's transaction (MANDATORY) so the ledger entry and the payment state change
-     * commit or roll back together.
-     */
+    /** Records a capture: the bank now owes us the gross amount; we owe the merchant the net; the fee is ours. */
     @Transactional(propagation = Propagation.MANDATORY)
     public JournalEntry postCapture(String paymentId, String merchantId, Money gross, Money fee) {
         String ccy = gross.currency();
@@ -82,14 +67,7 @@ public class LedgerService {
         return post(KIND_CAPTURE, REF_PAYMENT, paymentId, "Capture of " + paymentId, legs);
     }
 
-    /**
-     * Records a refund: we owe the merchant less; the bank owes us less (it will claw the money back from us).
-     * Fees are not returned on refund (documented policy; see README).
-     * <pre>
-     *   DR merchant_payable     amount
-     *   CR bank_receivable      amount
-     * </pre>
-     */
+    /** Records a refund: we owe the merchant less; the bank owes us less (it will claw the money back from us). */
     @Transactional(propagation = Propagation.MANDATORY)
     public JournalEntry postRefund(String refundId, String paymentId, String merchantId, Money amount) {
         String ccy = amount.currency();
@@ -99,7 +77,7 @@ public class LedgerService {
         return post(KIND_REFUND, REF_REFUND, refundId, "Refund " + refundId + " of " + paymentId, legs);
     }
 
-    /** Generic posting used by the specific flows above and by settlement/payout in later phases. */
+    /** Generic posting used by the specific flows above and by settlement/payout. */
     @Transactional(propagation = Propagation.MANDATORY)
     public JournalEntry post(String kind, String referenceType, String referenceId, String description, List<Leg> legs) {
         if (legs.size() < 2) {

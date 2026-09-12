@@ -10,10 +10,7 @@ import org.springframework.stereotype.Component;
 import java.security.SecureRandom;
 import java.util.HexFormat;
 
-/**
- * Creates the demo merchant (and its API key) on startup if missing, so "Try the demo" works on a fresh
- * database. Idempotent: safe to run on every boot. Later phases seed realistic payments for this merchant.
- */
+/** Creates the demo merchant (and its API key) on startup if missing, so "Try the demo" works on a fresh database. */
 @Component
 public class DemoDataSeeder implements ApplicationRunner {
 

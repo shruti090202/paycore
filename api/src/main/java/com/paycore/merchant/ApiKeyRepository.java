@@ -20,10 +20,7 @@ public interface ApiKeyRepository extends CrudRepository<ApiKey, String> {
     @Query("UPDATE api_keys SET revoked_at = :at WHERE id = :id AND merchant_id = :merchantId AND revoked_at IS NULL")
     int revoke(@Param("id") String id, @Param("merchantId") String merchantId, @Param("at") Instant at);
 
-    /**
-     * last_used_at is written at most once per window (the WHERE clause), so authenticating a key does not
-     * cost a DB write on every request: on Neon/Render that's the difference between 1 and 2 round-trips per call.
-     */
+    /** last_used_at is written at most once per window (the WHERE clause), so authenticating a key does not cost a DB write on every request: on Neon/Render. */
     @Modifying
     @Query("UPDATE api_keys SET last_used_at = :now WHERE id = :id AND (last_used_at IS NULL OR last_used_at < :threshold)")
     int touchIfStale(@Param("id") String id, @Param("now") Instant now, @Param("threshold") Instant threshold);

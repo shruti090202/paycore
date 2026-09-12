@@ -1,9 +1,4 @@
-// End-to-end checkout flow under load: create payment -> load session -> confirm with the approved test card
-// -> read the payment back. Runs against the docker-compose stack in CI (never against the free Render deploy).
-//
-//   k6 run -e BASE_URL=http://localhost:8080 -e API_KEY=sk_test_... load/checkout.js
-//
-// Thresholds come from a measured baseline (see load/README.md); override with -e P95_MS=... for experiments.
+// End-to-end checkout flow under load: create payment -> load session -> confirm with the approved test card -> read the payment back.
 import http from 'k6/http';
 import { check, sleep } from 'k6';
 import { Trend, Counter } from 'k6/metrics';

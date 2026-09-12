@@ -23,10 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.time.Clock;
 import java.util.List;
 
-/**
- * Reconciliation is a platform activity, but each merchant sees the exceptions that concern its payments and
- * its own payouts. Runs (files, totals) are visible read-only to every merchant.
- */
+/** Reconciliation is a platform activity, but each merchant sees the exceptions that concern its payments and its own payouts. */
 @RestController
 @RequestMapping("/dashboard/reconciliation")
 @Tag(name = "Dashboard: reconciliation")

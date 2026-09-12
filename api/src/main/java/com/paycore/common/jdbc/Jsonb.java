@@ -5,10 +5,7 @@ import tools.jackson.databind.ObjectMapper;
 
 import java.util.Map;
 
-/**
- * A JSON document destined for a Postgres {@code jsonb} column. Spring Data JDBC maps it via
- * {@link JdbcConfig}'s converters; entities hold this type instead of raw strings so the mapping is explicit.
- */
+/** A JSON document destined for a Postgres jsonb column. */
 public record Jsonb(String json) {
 
     /** Same conventions as the HTTP API (snake_case, no nulls, ISO instants) so stored JSON == what clients see. */

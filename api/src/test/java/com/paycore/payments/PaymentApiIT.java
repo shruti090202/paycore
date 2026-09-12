@@ -101,7 +101,7 @@ class PaymentApiIT extends AbstractIntegrationTest {
         assertThat(early.text("/error/type")).isEqualTo("state_conflict");
         assertThat(early.text("/error/code")).isEqualTo("payment_state_invalid");
 
-        // Bank says yes (the simulator calls the same service entry point).
+        // Bank says yes.
         paymentService.recordAuthorization(id, "bank_ref_1", CARD);
         Api.Response authorized = api.get("/v1/payments/" + id, Api.bearer(key));
         assertThat(authorized.text("/status")).isEqualTo("authorized");

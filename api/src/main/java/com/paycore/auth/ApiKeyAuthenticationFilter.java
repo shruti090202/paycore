@@ -11,11 +11,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 
-/**
- * Authenticates {@code /v1/**} calls from {@code Authorization: Bearer sk_test_...}.
- * The plaintext key is hashed (SHA-256) and looked up by hash; the key itself is never stored or logged.
- * No auth -> we leave the context empty and let Spring Security's entry point return 401.
- */
+/** Authenticates /v1/** calls from Authorization: Bearer sk_test_.... */
 public class ApiKeyAuthenticationFilter extends OncePerRequestFilter {
 
     private static final String BEARER = "Bearer ";

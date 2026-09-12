@@ -13,17 +13,7 @@ import java.time.Instant;
 import java.util.Map;
 import java.util.Optional;
 
-/**
- * Resolves the "we don't know" states by asking the bank for the reference we generated:
- * <ul>
- *   <li>payments stuck in {@code pending_bank} (bank timeout, or a crash between T1 and T2 of checkout),</li>
- *   <li>refunds stuck in {@code pending}.</li>
- * </ul>
- * Bank says approved -> apply; bank says declined -> fail; bank has no record -> after a grace period, fail with
- * {@code bank_unreachable} (the request provably never reached them, so no money moved).
- * Triggered by the {@code bank-status-check} job (GitHub Actions cron -> /internal/jobs) and, later, the
- * activity-gated in-process scheduler.
- */
+/** Resolves the "we don't know" states by asking the bank for the reference we generated: payments stuck in pending_bank (bank timeout, or a crash. */
 @Service
 public class BankResolutionService {
 

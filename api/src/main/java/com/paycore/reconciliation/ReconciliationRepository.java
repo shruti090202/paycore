@@ -36,8 +36,7 @@ public class ReconciliationRepository {
         this.jdbc = jdbc;
     }
 
-    // ---- settlement files ---------------------------------------------------------------------------------
-
+    // settlement files
     public SettlementFile storeFile(LocalDate date, String currency, String csv, int rows, long total, Instant now) {
         String id = Ids.newId("stl");
         jdbc.sql("""
@@ -66,8 +65,7 @@ public class ReconciliationRepository {
                 rs.getLong("total_minor"), rs.getString("currency").trim(), rs.getString("csv"), rs.getTimestamp("generated_at").toInstant());
     }
 
-    // ---- runs ----------------------------------------------------------------------------------------------
-
+    // runs
     public String startRun(String fileId, Instant now) {
         String id = Ids.newId("rcn");
         jdbc.sql("INSERT INTO reconciliation_runs (id, settlement_file_id, status, started_at) VALUES (:id, :f, 'running', :now)")
@@ -103,8 +101,7 @@ public class ReconciliationRepository {
                 rs.getTimestamp("started_at").toInstant(), fin == null ? null : fin.toInstant(), rs.getString("error"));
     }
 
-    // ---- items ---------------------------------------------------------------------------------------------
-
+    // items
     public void addItem(String runId, String merchantId, String kind, String bankRef, String paymentId, String refundId,
                         Long expected, Long actual, String detail, Instant now) {
         jdbc.sql("""
@@ -141,8 +138,7 @@ public class ReconciliationRepository {
                 rs.getTimestamp("created_at").toInstant());
     }
 
-    // ---- bank attempts (gateway side) ----------------------------------------------------------------------
-
+    // bank attempts (gateway side)
     public record Attempt(String id, String paymentId, String refundId, String kind, String bankRef, long amountMinor,
                           String currency, String outcome, String resolution, String merchantId, String paymentStatus,
                           long capturedMinor, String refundStatus, Instant createdAt) {
@@ -183,8 +179,7 @@ public class ReconciliationRepository {
                 rs.getString("refund_status"), rs.getTimestamp("created_at").toInstant());
     }
 
-    // ---- payouts -------------------------------------------------------------------------------------------
-
+    // payouts
     public record MerchantBalance(String merchantId, String currency, long balanceMinor) {
     }
 

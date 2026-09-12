@@ -7,12 +7,7 @@ import java.security.GeneralSecurityException;
 import java.security.MessageDigest;
 import java.util.HexFormat;
 
-/**
- * Webhook signing, Stripe-style: {@code PayCore-Signature: t=<unix seconds>,v1=<hex HMAC-SHA256>} where the
- * signed payload is {@code "<t>.<raw body>"}. Including the timestamp in the MAC means a captured request
- * cannot be replayed later (verifiers reject stale timestamps), and signing the raw bytes means any
- * re-serialization by a proxy breaks verification — which is the point.
- */
+/** Webhook signing, Stripe-style: PayCore-Signature: t= ,v1= where the signed payload is " . */
 public final class WebhookSignatures {
 
     public static final String HEADER = "PayCore-Signature";

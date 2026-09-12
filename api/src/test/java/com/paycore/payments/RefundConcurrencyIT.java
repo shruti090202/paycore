@@ -19,11 +19,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * Hundreds of concurrent refund requests against ONE payment. The invariant is asserted from the database,
- * not from the responses: the sum of succeeded refunds equals the captured amount, never more, and the
- * ledger nets to zero.
- */
+/** Hundreds of concurrent refund requests against ONE payment. */
 class RefundConcurrencyIT extends AbstractIntegrationTest {
 
     private static final int PARALLEL = 200;
@@ -62,7 +58,7 @@ class RefundConcurrencyIT extends AbstractIntegrationTest {
         assertThat(created).isEqualTo(CAPTURED / EACH);     // exactly 100 refunds accepted
         assertThat(rejected).isEqualTo(PARALLEL - CAPTURED / EACH);
 
-        // --- database is the oracle ---
+        // database is the oracle
         long succeededSum = jdbc.sql("SELECT COALESCE(SUM(amount_minor),0) FROM refunds WHERE payment_id = :p AND status = 'succeeded'")
                 .param("p", id).query(Long.class).single();
         long pendingCount = jdbc.sql("SELECT COUNT(*) FROM refunds WHERE payment_id = :p AND status = 'pending'")

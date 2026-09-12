@@ -21,8 +21,7 @@ public class WebhookRepository {
         this.jdbc = jdbc;
     }
 
-    // ---- endpoints ----------------------------------------------------------------------------------------
-
+    // endpoints
     public List<WebhookEndpoint> endpointsForMerchant(String merchantId) {
         return jdbc.sql("SELECT * FROM webhook_endpoints WHERE merchant_id = :m ORDER BY id")
                 .param("m", merchantId).query(this::endpoint).list();
@@ -66,8 +65,7 @@ public class WebhookRepository {
                 rs.getTimestamp("created_at").toInstant(), rs.getTimestamp("updated_at").toInstant());
     }
 
-    // ---- outbox -------------------------------------------------------------------------------------------
-
+    // outbox
     public void insertEvent(OutboxEvent e) {
         jdbc.sql("""
                 INSERT INTO outbox_events (id, merchant_id, type, aggregate_type, aggregate_id, payload, created_at)
@@ -121,8 +119,7 @@ public class WebhookRepository {
                 rs.getTimestamp("created_at").toInstant(), fanned == null ? null : fanned.toInstant());
     }
 
-    // ---- deliveries ---------------------------------------------------------------------------------------
-
+    // deliveries
     public void insertDelivery(WebhookDelivery d) {
         jdbc.sql("""
                 INSERT INTO webhook_deliveries (id, event_id, endpoint_id, merchant_id, status, attempts, next_attempt_at, created_at, updated_at)
@@ -134,11 +131,7 @@ public class WebhookRepository {
                 .update();
     }
 
-    /**
-     * Claim due deliveries. The lease is the trick: inside this transaction we push next_attempt_at forward,
-     * so once we commit, other dispatchers no longer see these rows as due — even though we then release the
-     * row lock to make the HTTP call. If we crash mid-delivery the lease expires and the row is retried.
-     */
+    /** Claim due deliveries. */
     public List<WebhookDelivery> claimDue(Instant now, Duration lease, int limit) {
         List<WebhookDelivery> due = jdbc.sql("""
                 SELECT * FROM webhook_deliveries

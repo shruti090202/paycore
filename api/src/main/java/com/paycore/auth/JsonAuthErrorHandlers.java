@@ -12,10 +12,7 @@ import tools.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
 
-/**
- * Security-filter rejections happen before any controller, so {@code @RestControllerAdvice} can't see them.
- * These handlers write the same {@link ApiError} envelope so clients see one error shape everywhere.
- */
+/** Security-filter rejections happen before any controller, so @RestControllerAdvice can't see them. */
 public class JsonAuthErrorHandlers {
 
     private final ObjectMapper mapper;

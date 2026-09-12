@@ -1,9 +1,6 @@
 package com.paycore.risk;
 
-/**
- * Everything a rule may look at for one checkout attempt. {@code cardNumber} is the (validated) test PAN and
- * exists only so the test-card-signal rule can recognise the documented risk cards; it is never persisted.
- */
+/** Everything a rule may look at for one checkout attempt. */
 public record RiskContext(
         String merchantId,
         String paymentId,

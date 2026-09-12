@@ -14,11 +14,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.util.regex.Pattern;
 
-/**
- * Assigns every request a correlation id. Honors an incoming {@code X-Request-Id} (so a caller's id
- * threads through our logs), otherwise mints {@code req_...}. Echoed on the response and put in MDC
- * so every log line for the request carries it — which is what makes structured logs searchable.
- */
+/** Assigns every request a correlation id. */
 @Component
 @Order(Ordered.HIGHEST_PRECEDENCE)
 public class CorrelationIdFilter extends OncePerRequestFilter {

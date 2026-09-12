@@ -9,10 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-/**
- * "The bank sends us today's settlement file." The simulator produces it; the gateway stores it verbatim.
- * Kept as two steps on purpose: nothing in the gateway trusts the bank's numbers until reconcile runs.
- */
+/** "The bank sends us today's settlement file." The simulator produces it; the gateway stores it verbatim. */
 @Component
 public class SettlementGenerateJob implements Job {
 

@@ -26,18 +26,7 @@ import java.time.Instant;
 import java.util.HexFormat;
 import java.util.Set;
 
-/**
- * Implements {@code Idempotency-Key} for mutating merchant-API calls.
- * <pre>
- *   first request        -> INSERT (merchant, key) in_progress, run, store response, mark completed
- *   same key, same body  -> replay the stored response (+ Idempotent-Replayed: true)
- *   same key, other body -> 422 idempotency_key_reused
- *   same key, in flight  -> 409 idempotency_key_in_flight + Retry-After
- *   our 5xx / exception  -> claim released so the client can retry
- * </pre>
- * Concurrency is settled by the primary key, not by application locks: 300 simultaneous requests with one key
- * produce one INSERT winner and 299 duplicates.
- */
+/** Implements Idempotency-Key for mutating merchant-API calls. */
 public class IdempotencyFilter extends OncePerRequestFilter {
 
     public static final String HEADER = "Idempotency-Key";

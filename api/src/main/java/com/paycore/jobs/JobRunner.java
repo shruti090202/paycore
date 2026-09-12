@@ -20,14 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-/**
- * Runs jobs by name with a database-level mutual exclusion that survives multiple instances and restarts:
- * the {@code job_runs} table has a partial unique index on {@code (job_name) WHERE status = 'running'}, so the
- * second concurrent trigger of the same job fails to insert its row and is told "already running".
- * <p>
- * Why not {@code pg_advisory_lock}: session-level advisory locks do not work behind Neon's transaction-mode
- * pooler, and a job spans many short transactions on purpose (each item commits independently).
- */
+/** Runs jobs by name with a database-level mutual exclusion that survives multiple instances and restarts: the job_runs table has a partial unique index. */
 @Service
 public class JobRunner {
 

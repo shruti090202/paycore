@@ -12,11 +12,7 @@ import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-/**
- * The producer side of the outbox. MANDATORY propagation: an event may only be written from inside the
- * transaction that changes state, so "state changed but event lost" and "event sent but state rolled back"
- * are both impossible — the two rows commit or vanish together.
- */
+/** The producer side of the outbox. */
 @Service
 public class OutboxWriter {
 

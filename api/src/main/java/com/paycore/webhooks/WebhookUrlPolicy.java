@@ -6,11 +6,7 @@ import java.net.InetAddress;
 import java.net.URI;
 import java.net.UnknownHostException;
 
-/**
- * Where we are willing to POST. A webhook URL is attacker-controlled input that makes OUR server issue
- * requests, so without this check a merchant could aim us at cloud metadata endpoints or internal services
- * (SSRF). Production allows only public https hosts; local/dev allows anything so tests can use localhost.
- */
+/** Where we are willing to POST. */
 public final class WebhookUrlPolicy {
 
     private final boolean allowPrivate;

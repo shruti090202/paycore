@@ -3,10 +3,7 @@ package com.paycore.common.money;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * The currencies PayCore accepts and their minor-unit exponents (ISO 4217).
- * JPY is deliberately included: an exponent of 0 is the classic bug source when "amount / 100" is hard-coded.
- */
+/** The currencies PayCore accepts and their minor-unit exponents (ISO 4217). */
 public final class Currencies {
 
     private static final Map<String, Integer> EXPONENTS = Map.of(

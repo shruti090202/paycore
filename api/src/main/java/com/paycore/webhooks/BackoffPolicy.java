@@ -3,11 +3,7 @@ package com.paycore.webhooks;
 import java.time.Duration;
 import java.util.concurrent.ThreadLocalRandom;
 
-/**
- * Exponential backoff with full jitter: {@code delay = random(0, min(cap, base * 2^(attempt-1)))}.
- * Full jitter (rather than "base * 2^n + small jitter") spreads retries from many failed deliveries to one
- * dead endpoint across the whole window instead of hammering it in synchronized waves.
- */
+/** Exponential backoff with full jitter: delay = random(0, min(cap, base * 2^(attempt-1))). */
 public final class BackoffPolicy {
 
     private final Duration base;

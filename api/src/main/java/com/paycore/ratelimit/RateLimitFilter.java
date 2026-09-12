@@ -17,11 +17,7 @@ import tools.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
 
-/**
- * Per-API-key rate limiting on the merchant API. Runs after authentication (the bucket is keyed by API key,
- * falling back to merchant for JWT-less audiences) and before idempotency (a replay still costs a token,
- * as at Stripe). Standard headers on every response; 429 + Retry-After when the bucket is empty.
- */
+/** Per-API-key rate limiting on the merchant API. */
 public class RateLimitFilter extends OncePerRequestFilter {
 
     private final TokenBucketRateLimiter limiter;

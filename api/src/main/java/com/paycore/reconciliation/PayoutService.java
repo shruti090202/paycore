@@ -19,14 +19,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Pays merchants what we owe them — but only out of money the bank has actually settled to us.
- * {@code payout = min(merchant_payable balance, remaining settlement_cash)}. A gateway that paid merchants
- * from unsettled receivables would be lending them money; this one never does.
- * <pre>
- *   DR merchant_payable:<m> / CR settlement_cash
- * </pre>
- */
+/** Pays merchants what we owe them — but only out of money the bank has actually settled to us. */
 @Service
 public class PayoutService {
 

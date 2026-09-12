@@ -1,12 +1,10 @@
-# Render Blueprint: one free Docker web service for the API. Neon (Postgres) and Upstash (Redis) are external;
-# their URLs are pasted into the service's environment in the Render dashboard (sync: false below).
-# Docs: https://render.com/docs/blueprint-spec
+# Render Blueprint for the API. Values marked sync: false are pasted in the Render dashboard (see DEPLOY.md).
 services:
   - type: web
     name: paycore-api
     runtime: docker
     plan: free
-    region: frankfurt            # pick the region closest to your Neon project
+    region: frankfurt
     dockerfilePath: ./api/Dockerfile
     dockerContext: ./api
     healthCheckPath: /actuator/health
@@ -14,37 +12,32 @@ services:
     envVars:
       - key: SPRING_PROFILES_ACTIVE
         value: prod
-      # ---- external services (paste in the dashboard) ----
-      - key: DATABASE_URL          # Neon POOLED connection string (host contains "-pooler"), postgresql://...
+      - key: DATABASE_URL
         sync: false
-      - key: DATABASE_DIRECT_URL   # Neon DIRECT connection string (no "-pooler"); used by Flyway only
+      - key: DATABASE_DIRECT_URL
         sync: false
-      - key: REDIS_URL             # Upstash: rediss://default:<password>@<host>:6379
+      - key: REDIS_URL
         sync: false
-      - key: SENTRY_DSN            # optional
+      - key: SENTRY_DSN
         sync: false
-      # ---- URLs of the web app (Vercel) ----
-      - key: CHECKOUT_BASE_URL     # e.g. https://paycore-web.vercel.app
+      - key: CHECKOUT_BASE_URL
         sync: false
-      - key: CORS_ALLOWED_ORIGINS  # same value; comma-separated if you add a custom domain
+      - key: CORS_ALLOWED_ORIGINS
         sync: false
-      # ---- secrets Render generates for you ----
       - key: JWT_SECRET
         generateValue: true
       - key: APP_ENCRYPTION_KEY
         generateValue: true
       - key: CARD_FINGERPRINT_KEY
         generateValue: true
-      - key: INTERNAL_JOB_TOKEN    # copy this value into the GitHub repository secret of the same name
+      - key: INTERNAL_JOB_TOKEN
         generateValue: true
       - key: DEMO_MERCHANT_PASSWORD
         generateValue: true
-      # ---- demo merchant ----
       - key: DEMO_MERCHANT_EMAIL
         value: demo@paycore.dev
-      - key: DEMO_API_KEY          # sk_test_ + at least 16 chars; also set as PAYCORE_DEMO_SECRET_KEY on Vercel
+      - key: DEMO_API_KEY
         sync: false
-      # ---- free-tier tuning ----
       - key: DB_POOL_MAX
         value: "4"
       - key: TOMCAT_MAX_THREADS

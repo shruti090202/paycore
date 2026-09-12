@@ -5,10 +5,7 @@ import com.paycore.risk.RiskRule;
 import com.paycore.risk.RuleConfig;
 import org.springframework.stereotype.Component;
 
-/**
- * Stands in for issuer/network fraud signals a real gateway would receive. Two documented test cards
- * trigger it: 4000000000009235 (elevated risk -> review) and 4100000000000019 (known fraud -> block).
- */
+/** Stands in for issuer/network fraud signals a real gateway would receive. */
 @Component
 public class TestCardSignalRule implements RiskRule {
 

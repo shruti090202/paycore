@@ -14,10 +14,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Job triggers for GitHub Actions cron (Render free instances sleep, so nothing in-process can be relied on).
- * Protected by {@code X-Internal-Token}. Hidden from the public OpenAPI document.
- */
+/** Job triggers for GitHub Actions cron (Render free instances sleep, so nothing in-process can be relied on). */
 @RestController
 @RequestMapping("/internal/jobs")
 @Hidden

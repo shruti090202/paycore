@@ -22,18 +22,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Map;
 
-/**
- * Hosted-checkout confirmation: the one place card data is handled.
- * <p>
- * The bank is called OUTSIDE any database transaction, between two short ones:
- * <ol>
- *   <li>T1: lock the payment, generate the bank reference, record the attempt, move to {@code pending_bank}, COMMIT.</li>
- *   <li>Call the bank (no locks held; the bank can take seconds).</li>
- *   <li>T2: apply the outcome (authorize/capture or fail). On timeout nothing changes: the payment stays
- *       {@code pending_bank} with a reference, and {@link BankResolutionService} asks the bank later.</li>
- * </ol>
- * A crash between T1 and T2 leaves exactly the same state as a timeout, so there is a single recovery path.
- */
+/** Hosted-checkout confirmation: the one place card data is handled. */
 @Service
 public class CheckoutService {
 
@@ -87,7 +76,7 @@ public class CheckoutService {
         RiskDecision decision = risk.evaluate(new RiskContext(preview.getMerchantId(), preview.getId(), preview.getAmountMinor(),
                 preview.getCurrency(), fingerprint, testCard.number(), preview.getCustomerEmail(), preview.getCustomerRef()));
 
-        // T1 -----------------------------------------------------------------------------------------------
+        // T1
         record Prepared(String paymentId, String attemptId, String bankRef, long amount, String currency, boolean blocked) {
         }
         Prepared prep = tx.execute(status -> {
@@ -107,8 +96,7 @@ public class CheckoutService {
             paymentService.recordRiskDecision(p.getId(), decision, summary);
             risk.record(p.getId(), p.getMerchantId(), decision);
             if (decision.outcome() == RiskDecision.Outcome.BLOCK) {
-                // Refused before the bank is ever contacted. The shopper sees a generic decline; the merchant
-                // sees failure_code risk_blocked and the reasons in the dashboard.
+                // Refused before the bank is ever contacted.
                 paymentService.markFailed(p.getId(), "risk_blocked", DeclineCodes.message("fraudulent"));
                 return new Prepared(p.getId(), null, null, p.getAmountMinor(), p.getCurrency(), true);
             }
@@ -123,7 +111,7 @@ public class CheckoutService {
             return new ConfirmResult(ResultKind.DECLINED, payments.findById(prep.paymentId()).orElseThrow(), "card_declined", null);
         }
 
-        // Bank call (no transaction) -----------------------------------------------------------------------
+        // Bank call (no transaction)
         Instant started = clock.instant();
         BankGateway.BankResponse response;
         // Send the normalized PAN (validation stripped spaces/dashes), never the raw user input.
@@ -131,8 +119,7 @@ public class CheckoutService {
         try {
             response = bank.authorize(new BankGateway.AuthorizeRequest(prep.bankRef(), prep.amount(), prep.currency(), normalized));
         } catch (RuntimeException e) {
-            // Unexpected failure talking to the bank: the payment stays pending_bank (resolved by the job), but the
-            // attempt must not look "in flight" forever.
+            // Unexpected failure talking to the bank: the payment stays pending_bank (resolved by the job), but the attempt must not look "in flight" forever.
             tx.executeWithoutResult(s -> attempts.recordOutcome(prep.attemptId(), BankAttempt.ERROR, null,
                     (int) Duration.between(started, clock.instant()).toMillis()));
             throw e;
@@ -149,7 +136,7 @@ public class CheckoutService {
         }
         int latency = (int) Duration.between(started, clock.instant()).toMillis();
 
-        // T2 -----------------------------------------------------------------------------------------------
+        // T2
         return tx.execute(status -> {
             if (response.approved()) {
                 attempts.recordOutcome(prep.attemptId(), BankAttempt.APPROVED, null, latency);

@@ -21,16 +21,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-/**
- * All payment state changes. Each mutating method:
- * <ol>
- *   <li>locks the payment row ({@code SELECT ... FOR UPDATE}) so concurrent callers serialize,</li>
- *   <li>validates the transition in Java (fast, friendly error),</li>
- *   <li>writes the payment, its timeline event and any ledger entry in ONE transaction,</li>
- *   <li>relies on the database to re-validate (transition trigger, CHECK constraints, balanced-entry trigger).</li>
- * </ol>
- * Bank interaction is layered on top of this (the bank simulator calls back into these methods).
- */
+/** All payment state changes. */
 @Service
 public class PaymentService {
 
@@ -67,8 +58,7 @@ public class PaymentService {
     public record CardSummary(String brand, String last4, String fingerprint) {
     }
 
-    // ---- create ---------------------------------------------------------------------------------------------
-
+    // create
     @Transactional
     public Payment create(CreateCommand cmd) {
         if (!Currencies.isSupported(cmd.currency())) {
@@ -104,8 +94,7 @@ public class PaymentService {
         return saved;
     }
 
-    // ---- reads ----------------------------------------------------------------------------------------------
-
+    // reads
     @Transactional(readOnly = true)
     public Payment require(String merchantId, String paymentId) {
         return payments.findByIdAndMerchantId(paymentId, merchantId)
@@ -128,12 +117,8 @@ public class PaymentService {
         return events.findByPaymentIdOrderByIdAsc(paymentId);
     }
 
-    // ---- state changes --------------------------------------------------------------------------------------
-
-    /**
-     * The bank approved the authorization. Called by the checkout flow. For {@code automatic}
-     * capture the payment is captured in the same transaction — two edges, two events, one commit.
-     */
+    // state changes
+    /** The bank approved the authorization. */
     @Transactional
     public Payment recordAuthorization(String paymentId, String bankRef, CardSummary card) {
         Payment p = lock(paymentId);
@@ -203,10 +188,7 @@ public class PaymentService {
         return p;
     }
 
-    /**
-     * We are about to ask the bank (or asked and never heard back). Committed BEFORE the bank call, with the
-     * reference we will send, so a crash or timeout leaves a payment the status-check job can resolve.
-     */
+    /** We are about to ask the bank (or asked and never heard back). */
     @Transactional
     public Payment markPendingBank(String paymentId, String bankRef, CardSummary card) {
         Payment p = lock(paymentId);
@@ -225,10 +207,7 @@ public class PaymentService {
         return p;
     }
 
-    /**
-     * The bank approved a refund. Updates the counters + status, posts the ledger entry and the timeline event.
-     * Runs inside the caller's transaction together with the refund row update.
-     */
+    /** The bank approved a refund. */
     @Transactional
     public Payment applyRefundSuccess(String paymentId, String refundId, Money amount) {
         Payment p = lock(paymentId);
@@ -276,8 +255,7 @@ public class PaymentService {
         recordEvent(p, type, null, null, data, clock.instant());
     }
 
-    // ---- internals ------------------------------------------------------------------------------------------
-
+    // internals
     private Payment doCapture(Payment p, Money toCapture, Instant now) {
         PaymentStatus from = p.paymentStatus();
         Merchant merchant = merchants.require(p.getMerchantId());

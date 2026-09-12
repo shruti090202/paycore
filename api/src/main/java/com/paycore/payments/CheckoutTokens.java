@@ -2,10 +2,7 @@ package com.paycore.payments;
 
 import java.security.SecureRandom;
 
-/**
- * Hosted-checkout session tokens ({@code cs_...}). The token is the only credential the browser holds, so it
- * must be unguessable (~190 bits) and is tied to exactly one payment.
- */
+/** Hosted-checkout session tokens (cs_...). */
 final class CheckoutTokens {
 
     private static final String ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";

@@ -10,11 +10,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-/**
- * In-process fast path: while the {@link ActivityGate} says something recently happened, dispatch webhooks and
- * resolve pending bank calls every few seconds so demos feel instant. When the window closes it stops touching
- * the database entirely (Neon can suspend). GitHub Actions cron -> /internal/jobs remains the guaranteed path.
- */
+/** In-process fast path: while the ActivityGate says something recently happened, dispatch webhooks and resolve pending bank calls every few seconds so. */
 @Component
 @EnableScheduling
 @ConditionalOnProperty(prefix = "paycore.scheduler", name = "enabled", havingValue = "true", matchIfMissing = true)

@@ -11,14 +11,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Lets {@code DATABASE_URL} (and optionally {@code DATABASE_DIRECT_URL} for Flyway) be a plain Postgres URI as
- * hosting providers hand it out — {@code postgresql://user:pass@host/db?sslmode=require} — instead of a JDBC
- * URL plus separate user/password variables. A JDBC-style value is left untouched.
- * <p>
- * Neon specifics: the app should use the pooled host ({@code -pooler}) and Flyway the direct host, because
- * PgBouncer's transaction mode breaks the session state migrations rely on.
- */
+/** Lets DATABASE_URL (and optionally DATABASE_DIRECT_URL for Flyway) be a plain Postgres URI as hosting providers hand it out —. */
 public class DatabaseUrlEnvironmentPostProcessor implements EnvironmentPostProcessor {
 
     @Override

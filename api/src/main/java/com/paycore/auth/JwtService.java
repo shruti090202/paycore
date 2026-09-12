@@ -20,12 +20,7 @@ import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 
-/**
- * Short-lived HS256 dashboard tokens. Symmetric signing is fine here because the only issuer and
- * verifier is this service; there is no third party that needs to verify without being able to mint.
- * TTL is short (default 30 min) and there is no refresh token: the dashboard simply re-logs in,
- * which keeps the attack window small and the implementation honest.
- */
+/** Short-lived HS256 dashboard tokens. */
 @Service
 public class JwtService {
 

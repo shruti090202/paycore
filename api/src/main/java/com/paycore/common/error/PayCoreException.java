@@ -1,10 +1,6 @@
 package com.paycore.common.error;
 
-/**
- * The single exception type modules throw for expected failures (bad input, illegal state, missing rows).
- * Carries a machine-readable {@code code} so clients can branch on it, and an optional {@code param}.
- * Unexpected failures (bugs, infra) are NOT wrapped in this; they surface as {@code internal_error}.
- */
+/** The single exception type modules throw for expected failures (bad input, illegal state, missing rows). */
 public class PayCoreException extends RuntimeException {
 
     private final ErrorType type;

@@ -14,10 +14,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.List;
 
-/**
- * Protects {@code /internal/**} (job triggers called by GitHub Actions cron) with a shared secret in
- * {@code X-Internal-Token}. Compared in constant time so response timing leaks nothing about the token.
- */
+/** Protects /internal/** (job triggers called by GitHub Actions cron) with a shared secret in X-Internal-Token. */
 public class InternalTokenFilter extends OncePerRequestFilter {
 
     public static final String HEADER = "X-Internal-Token";
