@@ -196,7 +196,7 @@ web/       Next.js 16 · React 19 · TypeScript · Tailwind 4 (dashboard, checko
 load/      k6 scenario + measured baseline (load/README.md)
 scripts/   smoke.sh — end-to-end check against any running API
 .github/   ci.yml (API tests, web build, k6 gate), jobs-frequent.yml, jobs-daily.yml
-render.yaml, docker-compose.yml, DEPLOY.md, CONVENTIONS.md
+render.yaml, docker-compose.yml
 ```
 
 ## Local setup
@@ -280,6 +280,68 @@ Live deployment (Render free in Frankfurt, Neon, Upstash), measured 2026-09-12 f
 - Refund and settlement flows are simulated instant transfers; there is no real bank, card network, or PCI scope.
 - Merchant rate limits and risk thresholds are stored per merchant, but the simulator's knobs are global.
 - The scheduled workflows depend on GitHub cron, which can be delayed and is disabled after 60 days without commits.
+
+## Deployment
+
+Everything runs on free tiers; nothing secret is committed.
+
+| Component | Service | Free-tier facts that shape the setup |
+|---|---|---|
+| API (Spring Boot, Docker) | Render free web service | ~512 MB, spins down after 15 idle min, ~1 min cold start, 750 instance-hours/month |
+| Postgres | Neon free | 0.5 GB, 100 compute-hours/month, auto-suspends after 5 idle min, PgBouncer pooler |
+| Redis | Upstash free | 500 K commands/month |
+| Web (Next.js) | Vercel Hobby | non-commercial use |
+| Background jobs | GitHub Actions cron | `jobs-frequent.yml` (15 min), `jobs-daily.yml`; auto-disabled after 60 days without commits |
+| Errors | Sentry Developer | optional |
+
+Order: Neon → Upstash → Render (`render.yaml` blueprint; set `DATABASE_URL`, `DATABASE_DIRECT_URL`, `REDIS_URL`,
+`JWT_SECRET`, `APP_ENCRYPTION_KEY`, `CARD_FINGERPRINT_KEY`, `DEMO_API_KEY`, `DEMO_MERCHANT_PASSWORD`,
+`INTERNAL_JOB_TOKEN`, `CORS_ALLOWED_ORIGINS`, `CHECKOUT_BASE_URL`, optional `SENTRY_DSN`) → Vercel
+(`NEXT_PUBLIC_API_BASE_URL`, `PAYCORE_DEMO_SECRET_KEY`, `PAYCORE_DEMO_WEBHOOK_SECRET`) → point
+`CORS_ALLOWED_ORIGINS` and `CHECKOUT_BASE_URL` at the Vercel URL → register the demo store's webhook endpoint →
+GitHub secrets `API_BASE_URL` and `INTERNAL_JOB_TOKEN` for the scheduled jobs. Verify with
+`scripts/smoke.sh https://<api>.onrender.com` (17 checks, no secrets needed).
+
+Things to know while it runs: the first request after 15 idle minutes takes 30–60 s (JVM start + Flyway check) and
+the web app says so; the in-process scheduler polls for only 10 minutes after real activity so Neon can suspend, and
+the 15-minute cron is the guaranteed path; the daily `retention-cleanup` job prunes idempotency keys, job runs,
+webhook attempts and fanned-out events to stay under Neon's cap (money rows are never deleted);
+`APP_ENCRYPTION_KEY` cannot be rotated without recreating webhook endpoints.
+
+## Engineering conventions
+
+Architecture (enforced by `ArchitectureTest`, ArchUnit): no module depends on `api`; `common` depends on nothing;
+no cycles; cross-module calls go through public services and records. Postgres is the system of record; Redis is
+only for rate limiting and fraud velocity, and losing it must never lose money. The health endpoint never touches
+Postgres or Redis.
+
+Persistence: Spring Data JDBC, no JPA; entities are records with prefixed ULID ids assigned in code and inserted
+with `JdbcAggregateTemplate.insert`; targeted updates are `@Modifying @Query` SQL with ownership in the WHERE
+clause and a checked row count; Flyway migrations are never edited after commit; money is `BIGINT` minor units
+plus an ISO currency, never floating point, with invariants in the database (CHECK constraints and triggers) and in
+code. Ledger tables are append-only records; only `PaymentService` mutates the `Payment` aggregate, under
+`FOR UPDATE`. External calls (the bank) are never made inside a database transaction: lock, reserve and record the
+outbound reference, commit, call out with no locks held, then apply the outcome in a second transaction, so a
+timeout or a crash leaves a recoverable state. Card data: only test cards are accepted, validated before anything
+is recorded; only brand, last four and an HMAC fingerprint are persisted; PANs are never logged. Domain events are
+written to the outbox inside the state-changing transaction and delivered by the dispatcher; nothing sends a
+webhook or e-mail from a request. Background jobs are idempotent and locked at the database level (the Neon
+pooler is transaction-mode, so no session advisory locks). Risk rules keep thresholds in `risk_rules` rows and
+return `unknown` rather than throwing; shoppers get a generic decline, merchants see the reasons.
+
+API: snake_case JSON; errors are always `{"error":{type,code,message,param?,request_id}}`; every response carries
+`X-Request-Id`, also in the log MDC. Four audiences with non-interchangeable credentials: `/v1/**` API key,
+`/dashboard/**` JWT, `/checkout/**` session token, `/internal/**` internal token. Configuration comes only from
+environment variables (`.env.example`).
+
+Testing: `*Test` are unit tests without a Spring context; `*IT` run the full stack against one shared
+Testcontainers Postgres with a cached context and create their own merchants. Tests assert the wire format, and
+concurrency tests assert invariants from the database, not from memory. Performance claims come only from the
+k6 measurements in `load/README.md`, run against Compose, never against Render.
+
+Frontend: client pages use `lib/api.ts` with the JWT from localStorage; server code uses `lib/server-api.ts`
+(`server-only`) and the demo secret is never exposed as a `NEXT_PUBLIC_*` variable. Webhook receivers verify the
+raw body before parsing and display deliveries from the API's log, not from process memory.
 
 ## License
 

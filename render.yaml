@@ -1,4 +1,4 @@
-# Render Blueprint for the API. Values marked sync: false are pasted in the Render dashboard (see DEPLOY.md).
+# Render Blueprint for the API. Values marked sync: false are pasted in the Render dashboard (see README, Deployment).
 services:
   - type: web
     name: paycore-api
